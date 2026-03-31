@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-5. Mở trình duyệt vào URL được in ra (mặc định `http://localhost:5173`).
+5. Mở trình duyệt vào URL được in ra (mặc định `http://localhost:3000`).
 
 ## 🧭 Scripts
 
