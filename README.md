@@ -1,20 +1,52 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Data EDA Dashboard - Spotify & Wikipedia Analysis
 
-# Run and deploy your AI Studio app
+Interactive Exploratory Data Analysis visualizations for Spotify Top Songs 2023 and Wikipedia datasets.
 
-This contains everything you need to run your app locally.
+## 📁 Project Structure
 
-View your app in AI Studio: https://ai.studio/apps/d8e1e530-e1ba-4848-b314-8376c7db7990
+```
+data-eda/
+├── src/
+│   ├── pages/
+│   │   ├── 1_spotify/           # Spotify Top Songs 2023 EDA
+│   │   │   ├── SpotifyEDA.tsx   # Interactive React + Plotly dashboard
+│   │   │   └── data/
+│   │   │       ├── eda_spotify (4) (1).ipynb  # Source of truth (Python)
+│   │   │       ├── eda_spotify_tracks.json    # EDA metadata
+│   │   │       └── full_report_2023.txt       # Exported analysis
+│   │   └── 2_wikipedia/         # Wikipedia EDA 
+│   │       ├── WikipediaEDA.tsx
+│   │       └── data/eda_data.json
+│   ├── App.tsx
+│   └── Home.tsx
+├── TODO.md                      # Fix tracking (completed)
+├── package.json
+└── README.md
+```
 
-## Run Locally
+## 🚀 Quick Start
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+npm run dev
+```
 
+## 📊 Key Features Fixed
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+✅ **Spotify Data Perfect Sync** (ipynb → TSX):
+- Hit Predictors: `[0.00,-0.03,-0.06,-0.02,+0.61,+0.68]`
+- 952 tracks, 24 features exact
+- Correlation heatmaps corrected
+
+## 🔧 Tech Stack
+- **React + Vite** (frontend)
+- **Plotly.js** (interactive charts)  
+- **Tailwind CSS** (styling)
+- **Python/Jupyter** (data source)
+
+## 📈 Analysis Highlights
+- **Playlist Power**: r=0.79 correlation with streams
+- **Friday Phenomenon**: 526/952 tracks (55%)
+- **Superstar Effect**: Top 10 artists = 19.2% streams
+
+**Built for data exploration & visualization! 🎧**
