@@ -3,6 +3,7 @@ import Plotly from 'plotly.js-dist-min';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
+import 'prismjs/themes/prism-tomorrow.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   AlertTriangle,
@@ -30,16 +31,8 @@ import edaData from './data/eda_spotify_tracks.json';
 
 const Plot = createPlotlyComponent(Plotly);
 
-// --- Types ---
-interface Explanation {
-  what: string;
-  why: string;
-  how: string;
-}
-
 interface CodeExample {
   title: string;
-  explanation: Explanation;
   plotly: string;
   matplotlib: string;
   seaborn: string;
@@ -401,15 +394,15 @@ const SectionHeader = ({
   icon: Icon, 
   isOpen, 
   onToggle, 
-  onTutorialToggle, 
-  onCopyCode 
+  onViewCode,
+  showCodeButton = true
 }: { 
   title: string, 
   icon: any, 
   isOpen: boolean, 
   onToggle: () => void,
-  onTutorialToggle: () => void,
-  onCopyCode: () => void
+  onViewCode: () => void
+  showCodeButton?: boolean
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b-4 border-[#1DB954] pb-2">
@@ -425,27 +418,25 @@ const SectionHeader = ({
           {isOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </h2>
       </div>
-      <div className="flex gap-2">
-        <button 
-          onClick={(e) => { e.stopPropagation(); onTutorialToggle(); }}
-          className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-zinc-800 transition-colors shadow-md"
-        >
-          <FileCode size={16} /> Tutorial
-        </button>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onCopyCode(); }}
-          className="flex items-center gap-2 bg-[#1DB954] text-black px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#1ed760] transition-colors shadow-md"
-        >
-          <Clipboard size={16} /> Copy Code
-        </button>
+        {showCodeButton && (
+        <div className="flex gap-2">
+          <button 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onViewCode(); 
+            }}
+            className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-zinc-800 transition-colors shadow-md"
+          >
+            <FileCode size={16} /> View Code
+          </button>
+        </div>
+            )}
       </div>
-    </div>
   );
 };
 
-const TutorialPanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boolean }) => {
+const CodePanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boolean }) => {
   const [activeTab, setActiveTab] = useState<'plotly' | 'matplotlib' | 'seaborn'>('plotly');
-  const [copied, setCopied] = useState(false);
   const data = typedEdaData[sectionKey];
 
   useEffect(() => {
@@ -455,12 +446,6 @@ const TutorialPanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boo
   }, [isOpen, activeTab]);
 
   if (!data) return null;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(data[activeTab]);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <AnimatePresence>
@@ -473,24 +458,9 @@ const TutorialPanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boo
         >
           <div className="bg-zinc-50 border-l-8 border-[#1DB954] rounded-r-xl p-6 shadow-inner">
             <h3 className="text-xl font-bold text-[#1DB954] mb-4 flex items-center gap-2">
-              <Info size={20} /> {data.title}
+              <FileCode size={20} /> {data.title}
             </h3>
             
-            <div className="grid md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm">
-                <strong className="text-[#1DB954] block mb-1">🔍 What:</strong>
-                <p className="text-sm text-zinc-600 leading-relaxed">{data.explanation.what}</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm">
-                <strong className="text-[#1DB954] block mb-1">❓ Why:</strong>
-                <p className="text-sm text-zinc-600 leading-relaxed">{data.explanation.why}</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm">
-                <strong className="text-[#1DB954] block mb-1">⚙️ How:</strong>
-                <p className="text-sm text-zinc-600 leading-relaxed">{data.explanation.how}</p>
-              </div>
-            </div>
-
             <div className="bg-zinc-900 rounded-xl overflow-hidden shadow-xl">
               <div className="flex border-b border-zinc-800">
                 {(['plotly', 'matplotlib', 'seaborn'] as const).map((lib) => (
@@ -508,20 +478,13 @@ const TutorialPanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boo
                   </button>
                 ))}
               </div>
-              <div className="relative group">
-                <button 
-                  onClick={handleCopy}
-                  className="absolute top-4 right-4 z-10 bg-[#1DB954] text-black px-3 py-1 rounded-md text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                >
-                  {copied ? <ClipboardCheck size={14} /> : <Clipboard size={14} />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-                <pre className="m-0 p-6 max-h-100 overflow-auto">
-                  <code className="language-python">
-                    {data[activeTab]}
-                  </code>
-                </pre>
-              </div>
+              
+              <pre className="m-0 p-6 max-h-100 overflow-auto leading-relaxed">
+                <code className="language-python">
+                  {data[activeTab]}
+                </code>
+              </pre>
+
             </div>
           </div>
         </motion.div>
@@ -546,7 +509,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
     summary: true,
   });
 
-  const [tutorials, setTutorials] = useState<Record<string, boolean>>({});
+  const [codePanels, setCodePanels] = useState<Record<string, boolean>>({});
 
   // Helper to generate realistic distribution data for visualizations
   const generateDistribution = (mean: number, std: number, count: number, min = 0, max = 100) => {
@@ -581,8 +544,12 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
     setSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleTutorial = (id: string) => {
-    setTutorials(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleCodePanel = (id: string) => {
+    setCodePanels(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      console.log('toggleCodePanel:', id, next[id], next);
+      return next;
+    });
   };
 
   const collapseAll = () => {
@@ -595,18 +562,10 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
     setSections(opened as any);
   };
 
-  const toggleAllTutorials = () => {
-    const anyOpen = Object.values(tutorials).some(v => v);
+  const toggleAllCodePanels = () => {
+    const anyOpen = Object.values(codePanels).some(v => v);
     const newState = Object.keys(typedEdaData).reduce((acc, key) => ({ ...acc, [key]: !anyOpen }), {});
-    setTutorials(newState);
-  };
-
-  const copyCode = (sectionKey: string) => {
-    const code = typedEdaData[sectionKey]?.plotly;
-    if (code) {
-      navigator.clipboard.writeText(code);
-      // Could add a toast here
-    }
+    setCodePanels(newState);
   };
 
   return (
@@ -652,8 +611,8 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           <button onClick={expandAll} className="px-6 py-2 rounded-full border-2 border-[#1DB954] text-[#1DB954] font-bold hover:bg-[#1DB954] hover:text-white transition-all flex items-center gap-2 text-sm">
             <LayoutDashboard size={16} /> Expand All
           </button>
-          <button onClick={toggleAllTutorials} className="px-6 py-2 rounded-full border-2 border-zinc-900 text-zinc-900 font-bold hover:bg-zinc-900 hover:text-white transition-all flex items-center gap-2 text-sm">
-            <FileCode size={16} /> Toggle Tutorials
+          <button onClick={toggleAllCodePanels} className="px-6 py-2 rounded-full border-2 border-zinc-900 text-zinc-900 font-bold hover:bg-zinc-900 hover:text-white transition-all flex items-center gap-2 text-sm">
+            <FileCode size={16} /> Toggle Code Panels
           </button>
         </div>
 
@@ -662,12 +621,12 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Methodology */}
           <section id="methodology" className="scroll-mt-24">
             <SectionHeader 
-              title="📚 Analysis Methodology" 
+              title="Analysis Methodology" 
               icon={Info} 
               isOpen={sections.methodology} 
               onToggle={() => toggleSection('methodology')}
-              onTutorialToggle={() => {}} 
-              onCopyCode={() => {}}
+              onViewCode={() => {}} 
+              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.methodology && (
@@ -708,12 +667,12 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Overview */}
           <section id="overview" className="scroll-mt-24">
             <SectionHeader 
-              title="📊 Dataset Overview" 
+              title="Dataset Overview" 
               icon={LayoutDashboard} 
               isOpen={sections.overview} 
               onToggle={() => toggleSection('overview')}
-              onTutorialToggle={() => {}} 
-              onCopyCode={() => {}}
+              onViewCode={() => {}} 
+              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.overview && (
@@ -791,14 +750,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 1: Data Acquisition */}
           <section id="s1" className="scroll-mt-24">
             <SectionHeader 
-              title="📥 Stage 1: Data Acquisition & Overview" 
+              title="Stage 1: Data Acquisition & Overview" 
               icon={Database} 
               isOpen={sections.s1} 
               onToggle={() => toggleSection('s1')}
-              onTutorialToggle={() => toggleTutorial('dataset_overview')}
-              onCopyCode={() => copyCode('dataset_overview')}
+              onViewCode={() => toggleCodePanel('dataset_overview')}
             />
-            <TutorialPanel sectionKey="dataset_overview" isOpen={tutorials['dataset_overview']} />
+            <CodePanel sectionKey="dataset_overview" isOpen={codePanels['dataset_overview']} />
             <AnimatePresence>
               {sections.s1 && (
                 <motion.div 
@@ -811,7 +769,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between border-b-2 border-indigo-100 pb-2">
                       <h3 className="text-2xl font-bold text-zinc-800 flex items-center gap-2">
-                        <span className="text-3xl">📊</span> Dataset Overview
+                        Dataset Overview
                       </h3>
                       <ChevronDown size={24} className="text-zinc-400" />
                     </div>
@@ -917,7 +875,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Zap size={24} />
                       </div>
                       <h3 className="text-2xl font-black text-zinc-900 tracking-tight">
-                        ⭐ TOP 10 SONGS FOR EACH NUMERICAL FEATURE
+                        TOP 10 SONGS FOR EACH NUMERICAL FEATURE
                       </h3>
                     </div>
                     
@@ -1017,14 +975,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 2: Preprocessing */}
           <section id="s2" className="scroll-mt-24">
             <SectionHeader 
-              title="🧹 Stage 2: Preprocessing & Noise" 
+              title="Stage 2: Preprocessing & Noise" 
               icon={Zap} 
               isOpen={sections.s2} 
               onToggle={() => toggleSection('s2')}
-              onTutorialToggle={() => toggleTutorial('missing_values')}
-              onCopyCode={() => copyCode('missing_values')}
+              onViewCode={() => toggleCodePanel('missing_values')}
             />
-            <TutorialPanel sectionKey="missing_values" isOpen={tutorials['missing_values']} />
+            <CodePanel sectionKey="missing_values" isOpen={codePanels['missing_values']} />
             <AnimatePresence>
               {sections.s2 && (
                 <motion.div 
@@ -1083,14 +1040,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 3: Descriptive Statistics & Outliers */}
           <section id="s3" className="scroll-mt-24">
             <SectionHeader 
-              title="📈 Stage 3: Descriptive Statistics & Outliers" 
+              title="Stage 3: Descriptive Statistics & Outliers" 
               icon={TrendingUp} 
               isOpen={sections.s3} 
               onToggle={() => toggleSection('s3')}
-              onTutorialToggle={() => toggleTutorial('descriptive_stats')}
-              onCopyCode={() => copyCode('descriptive_stats')}
+              onViewCode={() => toggleCodePanel('descriptive_stats')}
             />
-            <TutorialPanel sectionKey="descriptive_stats" isOpen={tutorials['descriptive_stats']} />
+            <CodePanel sectionKey="descriptive_stats" isOpen={codePanels['descriptive_stats']} />
             <AnimatePresence>
               {sections.s3 && (
                 <motion.div 
@@ -1299,14 +1255,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 4: Distribution Analysis */}
           <section id="s4" className="scroll-mt-24">
             <SectionHeader 
-              title="📊 Stage 4: Distribution Analysis" 
+              title="Stage 4: Distribution Analysis" 
               icon={LayoutDashboard} 
               isOpen={sections.s4} 
               onToggle={() => toggleSection('s4')}
-              onTutorialToggle={() => toggleTutorial('distribution_scanning')}
-              onCopyCode={() => copyCode('distribution_scanning')}
+              onViewCode={() => toggleCodePanel('distribution_scanning')}
             />
-            <TutorialPanel sectionKey="distribution_scanning" isOpen={tutorials['distribution_scanning']} />
+            <CodePanel sectionKey="distribution_scanning" isOpen={codePanels['distribution_scanning']} />
             <AnimatePresence>
               {sections.s4 && (
                 <motion.div 
@@ -1504,14 +1459,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 5: Correlation Analysis */}
           <section id="s5" className="scroll-mt-24">
             <SectionHeader 
-              title="🔗 Stage 5: Correlation Analysis" 
+              title="Stage 5: Correlation Analysis" 
               icon={Layers} 
               isOpen={sections.s5} 
               onToggle={() => toggleSection('s5')}
-              onTutorialToggle={() => toggleTutorial('correlation_analysis')}
-              onCopyCode={() => copyCode('correlation_analysis')}
+              onViewCode={() => toggleCodePanel('correlation_analysis')}
             />
-            <TutorialPanel sectionKey="correlation_analysis" isOpen={tutorials['correlation_analysis']} />
+            <CodePanel sectionKey="correlation_analysis" isOpen={codePanels['correlation_analysis']} />
             <AnimatePresence>
               {sections.s5 && (
                 <motion.div 
@@ -1761,14 +1715,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 6: Artist Impact & Superstar Effect */}
           <section id="s6" className="scroll-mt-24">
             <SectionHeader 
-              title="🏆 Stage 6: Artist Impact & Superstar Effect" 
+              title="Stage 6: Artist Impact & Superstar Effect" 
               icon={PieChart} 
               isOpen={sections.s6} 
               onToggle={() => toggleSection('s6')}
-              onTutorialToggle={() => toggleTutorial('artist_impact')}
-              onCopyCode={() => copyCode('artist_impact')}
+              onViewCode={() => toggleCodePanel('artist_impact')}
             />
-            <TutorialPanel sectionKey="artist_impact" isOpen={tutorials['artist_impact']} />
+            <CodePanel sectionKey="artist_impact" isOpen={codePanels['artist_impact']} />
             <AnimatePresence>
               {sections.s6 && (
                 <motion.div 
@@ -1912,14 +1865,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 7: Temporal Trends & Seasonality */}
           <section id="s7" className="scroll-mt-24">
             <SectionHeader 
-              title="📅 Stage 7: Temporal Trends & Seasonality" 
+              title="Stage 7: Temporal Trends & Seasonality" 
               icon={LineChart} 
               isOpen={sections.s7} 
               onToggle={() => toggleSection('s7')}
-              onTutorialToggle={() => toggleTutorial('temporal_trends')}
-              onCopyCode={() => copyCode('temporal_trends')}
+              onViewCode={() => toggleCodePanel('temporal_trends')}
             />
-            <TutorialPanel sectionKey="temporal_trends" isOpen={tutorials['temporal_trends']} />
+            <CodePanel sectionKey="temporal_trends" isOpen={codePanels['temporal_trends']} />
             <AnimatePresence>
               {sections.s7 && (
                 <motion.div 
@@ -2107,14 +2059,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 8: Success Factors */}
           <section id="s8" className="scroll-mt-24">
             <SectionHeader 
-              title="🎯 Stage 8: Success Factors" 
+              title="Stage 8: Success Factors" 
               icon={BarChart3} 
               isOpen={sections.s8} 
               onToggle={() => toggleSection('s8')}
-              onTutorialToggle={() => toggleTutorial('success_factors')}
-              onCopyCode={() => copyCode('success_factors')}
+              onViewCode={() => toggleCodePanel('success_factors')}
             />
-            <TutorialPanel sectionKey="success_factors" isOpen={tutorials['success_factors']} />
+            <CodePanel sectionKey="success_factors" isOpen={codePanels['success_factors']} />
             <AnimatePresence>
               {sections.s8 && (
                 <motion.div 
@@ -2172,14 +2123,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           {/* Stage 9: Audio Profile & Sonic Mood */}
           <section id="s9" className="scroll-mt-24">
             <SectionHeader 
-              title="🎧 Stage 9: Audio Profile & Sonic Mood" 
+              title="Stage 9: Audio Profile & Sonic Mood" 
               icon={Music} 
               isOpen={sections.s9} 
               onToggle={() => toggleSection('s9')}
-              onTutorialToggle={() => toggleTutorial('audio_profiles')}
-              onCopyCode={() => copyCode('audio_profiles')}
+              onViewCode={() => toggleCodePanel('audio_profiles')}
             />
-            <TutorialPanel sectionKey="audio_profiles" isOpen={tutorials['audio_profiles']} />
+            <CodePanel sectionKey="audio_profiles" isOpen={codePanels['audio_profiles']} />
             <AnimatePresence>
               {sections.s9 && (
                 <motion.div 
@@ -2278,15 +2228,15 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
             </AnimatePresence>
           </section>
 
-          {/* Executive Summary */}
+          {/* Key Insights */}
           <section id="summary" className="scroll-mt-24">
             <SectionHeader 
-              title="📝 Executive Summary of Findings" 
+              title="Key Insights" 
               icon={Clipboard} 
               isOpen={sections.summary} 
               onToggle={() => toggleSection('summary')}
-              onTutorialToggle={() => {}} 
-              onCopyCode={() => {}}
+              onViewCode={() => {}} 
+              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.summary && (

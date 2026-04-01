@@ -44,7 +44,7 @@ export default function Home({ onSelect }: HomeProps) {
             <span>Advanced Data Intelligence Platform</span>
           </div>
           
-          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter mb-8 bg-gradient-to-b from-white via-white to-white/20 bg-clip-text text-transparent leading-[0.9]">
+          <h1 className="text-7xl md:text-9xl font-bold tracking-tighter mb-8 bg-linear-to-b from-white via-white to-white/20 bg-clip-text text-transparent leading-[0.9]">
             The Art of <br /> Discovery.
           </h1>
           
@@ -57,7 +57,7 @@ export default function Home({ onSelect }: HomeProps) {
             {/* Spotify Card */}
             <motion.div
               whileHover={{ y: -8 }}
-              className="group relative p-10 rounded-[32px] border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-emerald-500/30 text-left overflow-hidden cursor-pointer"
+              className="group relative p-10 rounded-4xl border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-emerald-500/30 text-left overflow-hidden cursor-pointer"
               onClick={() => onSelect('spotify')}
             >
               <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
@@ -93,7 +93,7 @@ export default function Home({ onSelect }: HomeProps) {
             {/* Wikipedia Card */}
             <motion.div
               whileHover={{ y: -8 }}
-              className="group relative p-10 rounded-[32px] border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-blue-500/30 text-left overflow-hidden cursor-pointer"
+              className="group relative p-10 rounded-4xl border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-blue-500/30 text-left overflow-hidden cursor-pointer"
               onClick={() => onSelect('wikipedia')}
             >
               <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
