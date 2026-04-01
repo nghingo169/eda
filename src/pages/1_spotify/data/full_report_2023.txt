@@ -1,0 +1,165 @@
+==============================================================================
+SPOTIFY TOP SONGS 2023 - FULL EDA REPORT EXPORT
+==============================================================================
+
+--- STAGE 1 & 2: DATASET OVERVIEW & CLEANING ---
+Original Shape: (953, 24)
+Cleaned Shape: (952, 30)
+
+Feature Descriptions:
+                 Feature         Type                                                 Description
+0             track_name  Categorical                                            Name of the song
+1         artist(s)_name  Categorical                           Name of the artist(s) of the song
+2           artist_count    Numerical                  Number of artists contributing to the song
+3          released_year    Numerical                             Year when the song was released
+4         released_month    Numerical                            Month when the song was released
+5           released_day    Numerical                 Day of the month when the song was released
+6   in_spotify_playlists    Numerical         Number of Spotify playlists the song is included in
+7      in_spotify_charts    Numerical             Presence and rank of the song on Spotify charts
+8                streams    Numerical                          Total number of streams on Spotify
+9     in_apple_playlists    Numerical     Number of Apple Music playlists the song is included in
+10       in_apple_charts    Numerical         Presence and rank of the song on Apple Music charts
+11   in_deezer_playlists    Numerical          Number of Deezer playlists the song is included in
+12      in_deezer_charts    Numerical              Presence and rank of the song on Deezer charts
+13      in_shazam_charts    Numerical              Presence and rank of the song on Shazam charts
+14                   bpm    Numerical                   Beats per minute, a measure of song tempo
+15                   key  Categorical                                             Key of the song
+16                  mode  Categorical                           Mode of the song (major or minor)
+17        danceability_%    Numerical  Percentage indicating how suitable the song is for dancing
+18             valence_%    Numerical                    Positivity of the song's musical content
+19              energy_%    Numerical                          Perceived energy level of the song
+20        acousticness_%    Numerical                        Amount of acoustic sound in the song
+21    instrumentalness_%    Numerical                  Amount of instrumental content in the song
+22            liveness_%    Numerical                       Presence of live performance elements
+23         speechiness_%    Numerical                          Amount of spoken words in the song
+
+--- STAGE 3: STATISTICS & OUTLIERS ---
+Descriptive Statistics:
+       acousticness_%  artist_count    bpm  danceability_%  energy_%  in_apple_charts  in_apple_playlists  in_deezer_charts  in_deezer_playlists  in_shazam_charts  in_spotify_charts  in_spotify_playlists  instrumentalness_%  liveness_%  released_day  released_month  released_year  speechiness_%       streams  valence_%
+count          952.00        952.00 952.00          952.00    952.00           952.00              952.00            952.00               952.00            952.00             952.00                952.00              952.00      952.00        952.00          952.00         952.00         952.00        952.00     952.00
+mean            27.08          1.56 122.55           66.98     64.27            51.96               67.87              2.67               385.54             56.91              12.02               5202.57                1.58       18.21         13.94            6.04        2018.29          10.14  514137424.94      51.41
+std             26.00          0.89  28.07           14.63     16.56            50.63               86.47              6.04              1131.08            157.51              19.58               7901.40                8.41       13.72          9.20            3.56          11.01           9.92  566856949.04      23.48
+min              0.00          1.00  65.00           23.00      9.00             0.00                0.00              0.00                 0.00              0.00               0.00                 31.00                0.00        3.00          1.00            1.00        1930.00           2.00       2762.00       4.00
+25%              6.00          1.00  99.75           57.00     53.00             7.00               13.00              0.00                13.00              0.00               0.00                874.50                0.00       10.00          6.00            3.00        2020.00           4.00  141636175.00      32.00
+50%             18.00          1.00 121.00           69.00     66.00            38.50               34.00              0.00                44.00              2.00               3.00               2216.50                0.00       12.00         13.00            6.00        2022.00           6.00  290530915.00      51.00
+75%             43.00          2.00 140.25           78.00     77.00            87.00               88.00              2.00               164.25             33.25              16.00               5573.75                0.00       24.00         22.00            9.00        2022.00          11.00  673869022.00      70.00
+max             97.00          8.00 206.00           96.00     97.00           275.00              672.00             58.00             12367.00           1451.00             147.00              52898.00               91.00       97.00         31.00           12.00        2023.00          64.00 3703895074.00      97.00
+
+Outlier Summary (IQR Method):
+                 Feature  Outliers Count  Percentage (%) Severity
+8    in_deezer_playlists             154           16.18     High
+16         released_year             150           15.76     High
+9       in_shazam_charts             145           15.23     High
+7       in_deezer_charts             143           15.02     High
+17         speechiness_%             136           14.29     High
+11  in_spotify_playlists             109           11.45     High
+12    instrumentalness_%              87            9.14   Medium
+6     in_apple_playlists              78            8.19   Medium
+10     in_spotify_charts              78            8.19   Medium
+18               streams              74            7.77   Medium
+13            liveness_%              44            4.62      Low
+1           artist_count              27            2.84      Low
+5        in_apple_charts               9            0.95      Low
+2                    bpm               5            0.53      Low
+4               energy_%               4            0.42      Low
+3         danceability_%               3            0.32      Low
+0         acousticness_%               0            0.00      Low
+14          released_day               0            0.00      Low
+15        released_month               0            0.00      Low
+19             valence_%               0            0.00      Low
+
+--- STAGE 4 & 5: CORRELATIONS & TARGET VARIABLES ---
+Hit Threshold (75th percentile): 673,869,022 streams
+Correlation Matrix (Numeric Features vs Streams):
+bpm                    -0.00
+danceability_%         -0.11
+valence_%              -0.04
+energy_%               -0.03
+acousticness_%         -0.00
+instrumentalness_%     -0.04
+liveness_%             -0.05
+speechiness_%          -0.11
+artist_count           -0.14
+in_spotify_playlists    0.79
+streams                 1.00
+
+--- STAGE 5.1: ARTIST IMPACT ANALYSIS ---
+Total Unique Artists: 644
+Top 10 Artists by Total Streams:
+      artist(s)_name      streams  percentage
+571       The Weeknd  14185552870        2.90
+557     Taylor Swift  14053658300        2.87
+159       Ed Sheeran  13908947204        2.84
+222     Harry Styles  11608645649        2.37
+43         Bad Bunny   9997799607        2.04
+430   Olivia Rodrigo   7442148916        1.52
+170           Eminem   6183805596        1.26
+75        Bruno Mars   5846920599        1.19
+25    Arctic Monkeys   5569806731        1.14
+228  Imagine Dragons   5272484650        1.08
+
+Solo vs Collaboration Streams:
+  is_collaboration      streams
+0    Collaboration 427559547.78
+1             Solo 568211662.21
+
+--- STAGE 5.2: TEMPORAL TRENDS ---
+Yearly Audio Feature Averages (2000-2023):
+    released_year  danceability_%  energy_%  valence_%  acousticness_%  instrumentalness_%  liveness_%  speechiness_%    bpm
+0            2000           63.50     63.75      51.00           24.00                1.25       16.25           4.50 114.75
+1            2002           73.83     69.17      41.17           18.17                0.00       19.67          16.67 136.67
+2            2003           42.50     89.50      24.00            0.00                0.00       37.00           6.00 129.00
+3            2004           68.50     69.00      46.75           16.00                0.00        8.50          15.25 111.75
+4            2005           63.00     88.00      93.00            1.00                0.00       12.00           4.00  93.00
+5            2007           52.00     85.00      20.00            0.00                0.00        7.00           5.00 140.00
+6            2008           64.00     63.50      54.00            7.00                0.00       18.00           8.50 113.00
+7            2010           61.71     73.29      45.43           13.71                0.00       10.29           7.43 118.57
+8            2011           60.70     63.10      55.90           31.90                0.00       12.50           4.50 127.90
+9            2012           61.70     62.80      49.30           32.70                1.00       18.00           7.40 142.80
+10           2013           57.00     63.92      53.62           17.77                0.15       17.62           6.38 120.08
+11           2014           63.54     65.46      47.54           29.08                3.23       16.00           7.54 106.00
+12           2015           53.73     61.82      37.36           25.00               23.45       18.27           7.91 127.36
+13           2016           63.00     63.17      45.44           26.06                1.83       17.44           8.33 126.94
+14           2017           63.52     60.74      43.00           27.43                2.00       14.04           7.35 119.00
+15           2018           55.00     50.90      36.20           41.10                1.90       17.30           3.60 115.30
+16           2019           60.72     59.58      40.42           35.83                4.47       16.44           8.67 118.36
+17           2020           67.43     66.43      51.03           22.97                0.11       19.57           9.41 118.03
+18           2021           68.18     63.89      52.52           25.30                0.81       16.86          11.50 125.83
+19           2022           68.71     63.58      51.49           27.42                1.29       18.49          11.73 122.00
+20           2023           70.02     68.22      55.08           25.25                1.21       19.74           9.30 124.06
+
+Release Day Distribution:
+         Day  Number of Releases
+0     Monday                  60
+1    Tuesday                  65
+2  Wednesday                  87
+3   Thursday                 154
+4     Friday                 526
+5   Saturday                  23
+6     Sunday                  37
+
+--- STAGE 5.3 & 5.4: PLATFORM & HIT PREDICTORS ---
+Correlation of Platform Metrics with Hit Status:
+artist_count           -0.15
+speechiness_%          -0.12
+danceability_%         -0.09
+valence_%              -0.06
+liveness_%             -0.03
+instrumentalness_%     -0.02
+energy_%               -0.02
+bpm                    -0.01
+acousticness_%         -0.00
+in_deezer_playlists     0.49
+in_apple_playlists      0.61
+in_spotify_playlists    0.68
+
+--- STAGE 6: EXECUTIVE SUMMARY FINDINGS ---
+1. Playlist inclusion (Spotify/Apple) is the #1 predictor of streams.
+2. Solo artists show higher average streams than collaborations in this dataset.
+3. Friday is the dominant release day (The Friday Phenomenon).
+4. Most successful songs are energetic with high danceability.
+
+--- VISUALIZATION METADATA --- 
+- Mood Scatter: Energy vs Valence (Color: Mode, Size: Danceability)
+- Radar Chart: Mega Hit vs Normal (Features: danceability, valence, energy, acousticness, liveness)
+- Heatmaps: Cross-platform presence and feature correlations.

@@ -1,0 +1,101 @@
+{
+  "dataset_overview": {
+    "title": "Dataset Overview & Target Variable",
+    "explanation": {
+      "what": "Initial scan of the dataset to understand its shape, feature types, and the distribution of the target variable (streams).",
+      "why": "Crucial for identifying the scale of the problem and ensuring the target variable is clean and numeric.",
+      "how": "Using pandas for shape and dtypes, and Plotly for visualizing the stream distribution."
+    },
+    "plotly": "import plotly.express as px\nfig = px.histogram(df, x='streams', title='Distribution of Streams')\nfig.show()",
+    "matplotlib": "import matplotlib.pyplot as plt\nplt.hist(df['streams'])\nplt.title('Distribution of Streams')\nplt.show()",
+    "seaborn": "import seaborn as sns\nsns.histplot(df['streams'])\nplt.title('Distribution of Streams')\nplt.show()"
+  },
+  "missing_values": {
+    "title": "Missing Value Analysis",
+    "explanation": {
+      "what": "Identifying null or NaN values across all features.",
+      "why": "Missing data can bias models and cause errors in statistical calculations.",
+      "how": "Using df.isnull().sum() and visualizing with a bar chart."
+    },
+    "plotly": "import plotly.graph_objects as go\nmissing = df.isnull().sum()\nfig = go.Figure(data=[go.Bar(x=missing.index, y=missing.values)])\nfig.show()",
+    "matplotlib": "df.isnull().sum().plot(kind='bar')\nplt.show()",
+    "seaborn": "sns.heatmap(df.isnull(), cbar=False)\nplt.show()"
+  },
+  "descriptive_stats": {
+    "title": "Descriptive Statistics",
+    "explanation": {
+      "what": "Calculating mean, median, standard deviation, and quartiles for numerical features.",
+      "why": "Provides a mathematical summary of the data's central tendency and spread.",
+      "how": "Using df.describe() in pandas."
+    },
+    "plotly": "# Plotly usually visualizes distributions rather than tables\nfig = px.box(df, y='bpm')\nfig.show()",
+    "matplotlib": "print(df.describe())",
+    "seaborn": "sns.boxplot(data=df, y='bpm')\nplt.show()"
+  },
+  "distribution_scanning": {
+    "title": "Distribution Scanning",
+    "explanation": {
+      "what": "Visualizing the frequency distribution of key features like Danceability and Energy.",
+      "why": "Helps identify skewness, modality, and potential outliers.",
+      "how": "Histograms and density plots."
+    },
+    "plotly": "fig = px.histogram(df, x=['danceability_%', 'energy_%'], barmode='overlay')\nfig.show()",
+    "matplotlib": "df[['danceability_%', 'energy_%']].hist()\nplt.show()",
+    "seaborn": "sns.kdeplot(data=df[['danceability_%', 'energy_%']])\nplt.show()"
+  },
+  "correlation_analysis": {
+    "title": "Correlation Analysis",
+    "explanation": {
+      "what": "Measuring the linear relationship between pairs of features.",
+      "why": "Identifies which features are most strongly related to the target variable (streams).",
+      "how": "Correlation matrix (Pearson) and heatmaps."
+    },
+    "plotly": "fig = px.imshow(df.corr(), text_auto=True)\nfig.show()",
+    "matplotlib": "plt.matshow(df.corr())\nplt.show()",
+    "seaborn": "sns.heatmap(df.corr(), annot=True)\nplt.show()"
+  },
+  "artist_impact": {
+    "title": "Artist Impact Analysis",
+    "explanation": {
+      "what": "Analyzing the contribution of individual artists to total stream counts.",
+      "why": "Reveals market concentration and the 'Superstar Effect'.",
+      "how": "Groupby artist and sum streams, then visualize with bar charts."
+    },
+    "plotly": "top_artists = df.groupby('artist(s)_name')['streams'].sum().nlargest(10)\nfig = px.bar(top_artists)\nfig.show()",
+    "matplotlib": "df.groupby('artist(s)_name')['streams'].sum().nlargest(10).plot(kind='bar')\nplt.show()",
+    "seaborn": "sns.barplot(x=top_artists.values, y=top_artists.index)\nplt.show()"
+  },
+  "temporal_trends": {
+    "title": "Temporal Trends & Seasonality",
+    "explanation": {
+      "what": "Tracking how audio features and release volumes change over years and months.",
+      "why": "Identifies industry shifts and optimal release windows.",
+      "how": "Line charts for yearly averages and bar charts for monthly counts."
+    },
+    "plotly": "yearly = df.groupby('released_year').mean()\nfig = px.line(yearly, y='danceability_%')\nfig.show()",
+    "matplotlib": "df.groupby('released_year')['danceability_%'].mean().plot()\nplt.show()",
+    "seaborn": "sns.lineplot(data=df, x='released_year', y='danceability_%')\nplt.show()"
+  },
+  "success_factors": {
+    "title": "Success Factors Analysis",
+    "explanation": {
+      "what": "Comparing 'Mega Hits' vs 'Normal Hits' across various metrics.",
+      "why": "Isolates the specific characteristics that lead to extreme success.",
+      "how": "Scatter plots and radar charts."
+    },
+    "plotly": "fig = px.scatter(df, x='in_spotify_playlists', y='streams')\nfig.show()",
+    "matplotlib": "plt.scatter(df['in_spotify_playlists'], df['streams'])\nplt.show()",
+    "seaborn": "sns.regplot(data=df, x='in_spotify_playlists', y='streams')\nplt.show()"
+  },
+  "audio_profiles": {
+    "title": "Audio Profiles & Sonic Mood",
+    "explanation": {
+      "what": "Mapping the 'mood' of tracks using Energy and Valence.",
+      "why": "Visualizes the emotional landscape of the dataset.",
+      "how": "2D scatter plots (Mood Maps) and Radar charts."
+    },
+    "plotly": "fig = px.scatter(df, x='valence_%', y='energy_%', color='mode')\nfig.show()",
+    "matplotlib": "plt.scatter(df['valence_%'], df['energy_%'])\nplt.show()",
+    "seaborn": "sns.scatterplot(data=df, x='valence_%', y='energy_%')\nplt.show()"
+  }
+}
