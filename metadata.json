@@ -1,0 +1,5 @@
+{
+  "name": "Data Explorer: Spotify & Wikipedia EDA",
+  "description": "A unified portal for exploratory data analysis of Spotify music trends and Wikipedia knowledge patterns.",
+  "requestFramePermissions": []
+}
