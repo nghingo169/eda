@@ -361,7 +361,7 @@ const InsightCard = ({ insights }: { insights: string[] }) => (
   </div>
 );
 
-export default function MMHS150K_EDA() {
+export default function MMHS150K_EDA({ onBack }: { onBack?: () => void }) {
   const [activeSection, setActiveSection] = useState('overview');
   const [selectedCode, setSelectedCode] = useState<{ id: string, title: string } | null>(null);
 
@@ -435,6 +435,16 @@ export default function MMHS150K_EDA() {
             <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center hover:bg-zinc-600 cursor-pointer transition-colors">
               <User size={20} />
             </div>
+            {onBack && (
+              <button
+                onClick={onBack}
+                title="Back to Home"
+                aria-label="Back to Home"
+                className="w-10 h-10 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors"
+              >
+                <Home size={20} className="text-zinc-300" />
+              </button>
+            )}
             <button title="Create new post" aria-label="Create new post" className="bg-blue-500 hover:bg-blue-600 text-white font-bold p-3 rounded-full transition-colors">
               <Zap size={24} />
             </button>
@@ -545,21 +555,21 @@ export default function MMHS150K_EDA() {
                 </TweetCard>
 
                 <TweetCard 
-                  title="Class Distribution - 6-Category Label Breakdown" 
+                  title="Class Distribution" 
                   subtitle="Severe imbalance: NotHate dominates at 82.77%, while Religion accounts for just 0.11% of all samples"
                   sectionId="overview"
                   onViewCode={(id) => handleViewCode(id, "Class Distribution")}
                 >
-                  <PlotlyEmbed src="/hate/51_class_distribution.html" height={400} />
+                  <PlotlyEmbed src="hate/51_class_distribution.html" height={400} />
                 </TweetCard>
 
                 <TweetCard 
-                  title="Annotator Confusion Matrix - Inter-Rater Disagreement" 
-                  subtitle="Where 3 MTurk workers diverge most: 'OtherHate' and 'Racist' show the highest labeling ambiguity"
+                  title="Annotator Confusion Matrix" 
+                  subtitle="Inter-Rater Disagreement: 'OtherHate' and 'Racist' show the highest labeling ambiguity"
                   sectionId="overview"
                   onViewCode={(id) => handleViewCode(id, "Annotator Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/53_annotator_confusion.html" height={500} />
+                  <PlotlyEmbed src="hate/53_annotator_confusion.html" height={500} />
                 </TweetCard>
 
                 <InsightCard 
@@ -581,7 +591,7 @@ export default function MMHS150K_EDA() {
                   sectionId="core"
                   onViewCode={(id) => handleViewCode(id, "Dataset Scale")}
                 >
-                  <PlotlyEmbed src="/hate/21_dataset_scale.html" height={400} />
+                  <PlotlyEmbed src="hate/21_dataset_scale.html" height={400} />
                 </TweetCard>
 
                 <TweetCard 
@@ -590,7 +600,7 @@ export default function MMHS150K_EDA() {
                   sectionId="core"
                   onViewCode={(id) => handleViewCode(id, "Missing Data")}
                 >
-                  <PlotlyEmbed src="/hate/8_missing_data.html" height={400} />
+                  <PlotlyEmbed src="hate/8_missing_data.html" height={400} />
                 </TweetCard>
 
                 { 
@@ -600,7 +610,7 @@ export default function MMHS150K_EDA() {
                   sectionId="core"
                   onViewCode={(id) => handleViewCode(id, "Word Counts")}
                 >
-                  <PlotlyEmbed src="/hate/11_word_count_hist.html" height={400} />
+                  <PlotlyEmbed src="hate/11_word_count_hist.html" height={400} />
                 </TweetCard>
                 }
 
@@ -610,7 +620,7 @@ export default function MMHS150K_EDA() {
                   sectionId="core"
                   onViewCode={(id) => handleViewCode(id, "Character Counts")}
                 >
-                  <PlotlyEmbed src="/hate/33a_char_count_hist.html" height={400} />
+                  <PlotlyEmbed src="hate/33a_char_count_hist.html" height={400} />
                 </TweetCard>
 
                 <TweetCard 
@@ -619,7 +629,7 @@ export default function MMHS150K_EDA() {
                   sectionId="core"
                   onViewCode={(id) => handleViewCode(id, "Tweet Flags")}
                 >
-                  <PlotlyEmbed src="/hate/33b_tweet_flags.html" height={400} />
+                  <PlotlyEmbed src="hate/33b_tweet_flags.html" height={400} />
                 </TweetCard>
 
                 <InsightCard 
@@ -641,7 +651,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Frequent Words")}
                 >
-                  <PlotlyEmbed src="/hate/35_overall_frequent_words.html" height={450} />
+                  <PlotlyEmbed src="hate/35_overall_frequent_words.html" height={450} />
                 </TweetCard>
 
                 <TweetCard 
@@ -650,12 +660,12 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Words per Class")}
                 >
-                  <PlotlyEmbed src="/hate/36_top_words_per_class.html" height={600} />
+                  <PlotlyEmbed src="hate/36_top_words_per_class.html" height={600} />
                 </TweetCard>
 
                 { 
                 <TweetCard 
-                  title="Vocabulary Richness - Lexical Diversity per Class (Type-Token Ratio)" 
+                  title="Vocabulary Richness" 
                   subtitle="Religion class leads with 58% richness despite tiny size; NotHate has the lowest diversity at 4.52% due to volume"
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Vocab Richness")}
@@ -702,16 +712,16 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Unique Vocab")}
                 >
-                  <PlotlyEmbed src="/hate/37_unique_vocab_per_class.html" height={450} />
+                  <PlotlyEmbed src="hate/37_unique_vocab_per_class.html" height={450} />
                 </TweetCard>
 
                 <TweetCard 
-                  title="TF-IDF Analysis - Class-Discriminative Terms per Category" 
+                  title="TF-IDF Analysis" 
                   subtitle="Top statistically weighted tokens that uniquely identify each hate class vs. the rest of the corpus"
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "TF-IDF Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/38_tfidf_per_class.html" height={600} stackSubplots={true}/>
+                  <PlotlyEmbed src="hate/38_tfidf_per_class.html" height={600} stackSubplots={true}/>
                 </TweetCard>
 
                 <TweetCard 
@@ -720,7 +730,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Bigrams Set 1")}
                 >
-                  <PlotlyEmbed src="/hate/16_bigrams_per_class.html" height={750} stackSubplots={true} />
+                  <PlotlyEmbed src="hate/16_bigrams_per_class.html" height={750} stackSubplots={true} />
                 </TweetCard>
 
                 <TweetCard 
@@ -729,7 +739,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Trigrams Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/39_trigrams_per_class.html" height={750} stackSubplots={true}/>
+                  <PlotlyEmbed src="hate/39_trigrams_per_class.html" height={750} stackSubplots={true}/>
                 </TweetCard>
 
                 <TweetCard 
@@ -738,7 +748,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Stopword Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/34_stopword_rate_per_class.html" height={400} />
+                  <PlotlyEmbed src="hate/34_stopword_rate_per_class.html" height={400} />
                 </TweetCard>
 
                 <TweetCard 
@@ -748,7 +758,7 @@ export default function MMHS150K_EDA() {
                   onViewCode={(id) => handleViewCode(id, "Word Clouds")}
                 >
                   <div className="p-4 bg-white">
-                    <img src="/hate/wordclouds.png" alt="Word Clouds" className="w-full h-auto rounded-xl" referrerPolicy="no-referrer" />
+                    <img src="hate/wordclouds.png" alt="Word Clouds" className="w-full h-auto rounded-xl" referrerPolicy="no-referrer" />
                   </div>
                 </TweetCard>
 
@@ -758,7 +768,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Jaccard Similarity")}
                 >
-                  <PlotlyEmbed src="/hate/17_vocab_jaccard.html" height={500} />
+                  <PlotlyEmbed src="hate/17_vocab_jaccard.html" height={500} />
                 </TweetCard>
 
                 <TweetCard 
@@ -767,7 +777,7 @@ export default function MMHS150K_EDA() {
                   sectionId="text"
                   onViewCode={(id) => handleViewCode(id, "Cosine Similarity Alt")}
                 >
-                  <PlotlyEmbed src="/hate/312_class_cosine_similarity.html" height={500} />
+                  <PlotlyEmbed src="hate/312_class_cosine_similarity.html" height={500} />
                 </TweetCard>
 
                 <InsightCard 
@@ -790,7 +800,7 @@ export default function MMHS150K_EDA() {
                   onViewCode={(id) => handleViewCode(id, "Image Dimensions Dashboard")}
                 >
                   {/* Đã tăng height lên 800 để hiển thị đủ 2 hàng biểu đồ của dashboard */}
-                  <PlotlyEmbed src="/hate/41_image_dimensions_dashboard.html" height={800} />
+                  <PlotlyEmbed src="hate/41_image_dimensions_dashboard.html" height={800} />
                 </TweetCard>
 
                 <TweetCard 
@@ -800,7 +810,7 @@ export default function MMHS150K_EDA() {
                   onViewCode={(id) => handleViewCode(id, "Color Quality Dashboard")}
                 >
                   {/* Đã tăng height lên 800 để hiển thị đủ không gian cho 4 biểu đồ (2x2 grid) */}
-                  <PlotlyEmbed src="/hate/42_color_quality_dashboard.html" height={800} />
+                  <PlotlyEmbed src="hate/42_color_quality_dashboard.html" height={800} />
                 </TweetCard>
 
                 <TweetCard 
@@ -809,7 +819,7 @@ export default function MMHS150K_EDA() {
                   sectionId="image"
                   onViewCode={(id) => handleViewCode(id, "Person Detection")}
                 >
-                  <PlotlyEmbed src="/hate/23_person_detection_rate.html" height={400} stackSubplots={true} />
+                  <PlotlyEmbed src="hate/23_person_detection_rate.html" height={400} stackSubplots={true} />
                 </TweetCard>
 
                 <InsightCard 
@@ -833,7 +843,7 @@ export default function MMHS150K_EDA() {
                   sectionId="classification"
                   onViewCode={(id) => handleViewCode(id, "t-SNE Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/54_tsne_resnet50.html" height={600} />
+                  <PlotlyEmbed src="hate/54_tsne_resnet50.html" height={600} />
                 </TweetCard>
 
                 <TweetCard 
@@ -842,7 +852,7 @@ export default function MMHS150K_EDA() {
                   sectionId="classification"
                   onViewCode={(id) => handleViewCode(id, "UMAP Analysis")}
                 >
-                  <PlotlyEmbed src="/hate/55_umap_resnet50.html" height={600} />
+                  <PlotlyEmbed src="hate/55_umap_resnet50.html" height={600} />
                 </TweetCard>
 
                 <InsightCard 
@@ -865,7 +875,7 @@ export default function MMHS150K_EDA() {
                   sectionId="ocr"
                   onViewCode={(id) => handleViewCode(id, "OCR Coverage")}
                 >
-                  <PlotlyEmbed src="/hate/18_ocr_coverage.html" height={400} />
+                  <PlotlyEmbed src="hate/18_ocr_coverage.html" height={400} />
                 </TweetCard>
 
                 <TweetCard 
@@ -874,7 +884,7 @@ export default function MMHS150K_EDA() {
                   sectionId="ocr"
                   onViewCode={(id) => handleViewCode(id, "OCR Word Count")}
                 >
-                  <PlotlyEmbed src="/hate/61_ocr_word_count.html" height={400} />
+                  <PlotlyEmbed src="hate/61_ocr_word_count.html" height={400} />
                 </TweetCard>
 
                 <InsightCard 
@@ -898,17 +908,17 @@ export default function MMHS150K_EDA() {
                   sectionId="explainability"
                   onViewCode={(id) => handleViewCode(id, "Text Positioning")}
                 >
-                  <PlotlyEmbed src="/hate/71_text_position_violin.html" height={500} />
+                  <PlotlyEmbed src="hate/71_text_position_violin.html" height={500} />
                 </TweetCard>
 
                 <TweetCard 
-                  title="Grad-CAM Visualization - Where the Model Looks to Classify Hate" 
+                  title="Grad-CAM Visualization" 
                   subtitle="Heatmaps overlaid on input images show that the model prioritizes embedded text regions and faces as primary decision signals"
                   sectionId="explainability"
                   onViewCode={(id) => handleViewCode(id, "Grad-CAM")}
                 >
                   <div className="p-4 bg-white">
-                    <img src="/hate/gradcam.png" alt="Grad-CAM" className="w-full h-auto rounded-xl" referrerPolicy="no-referrer" />
+                    <img src="hate/gradcam.png" alt="Grad-CAM" className="w-full h-auto rounded-xl" referrerPolicy="no-referrer" />
                   </div>
                 </TweetCard>
 
@@ -925,13 +935,13 @@ export default function MMHS150K_EDA() {
               </motion.div>
             </section>
 
-{/* Key Insights Section */}
+          {/* Key Insights Section */}
             <section id="insights" className="scroll-mt-20">
               <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
  
                 {/* ── Pillar 1: Dataset Characteristics ── */}
                 <TweetCard
-                  title="Dataset Characteristics - What the Data Tells Us"
+                  title="Dataset Characteristics"
                   subtitle="Structural properties uncovered across all 5 EDA dimensions: scale, balance, text, image, and annotations"
                   sectionId="insights"
                   onViewCode={(id) => handleViewCode(id, "Dataset Characteristics")}
@@ -1139,16 +1149,6 @@ export default function MMHS150K_EDA() {
                     </div>
                   </div>
                 </TweetCard>
- 
-                <InsightCard
-                  insights={[
-                    "EDA Objective: Structure confirmed - 149,823 multimodal samples, 6 heterogeneous feature types, 3-annotator labeling scheme requiring majority-vote resolution.",
-                    "EDA Objective: Data cleaning is low-cost - missing values are negligible; the real quality issue is annotation subjectivity, not raw data corruption.",
-                    "EDA Objective: Patterns found - OCR coverage, person detection rate, and class-specific n-grams are the three strongest univariate predictors of hate class.",
-                    "EDA Objective: Algorithm direction set - multimodal late-fusion with weighted loss is the evidence-backed choice; linear separability is ruled out by t-SNE/UMAP overlap.",
-                    "EDA Objective: Story told - the dataset reveals that online hate in 2020s Twitter is primarily meme-driven, visually generic but textually targeted, and semantically context-dependent."
-                  ]}
-                />
               </motion.div>
             </section>
           </div>
@@ -1166,4 +1166,3 @@ export default function MMHS150K_EDA() {
     </div>
   );
 }
- 

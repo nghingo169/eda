@@ -47,7 +47,6 @@ A deep dive into a manually annotated multimodal hate speech dataset of 150,000 
 
 ## 📂 Project Structure
 
-\`\`\`text
 P4AIDS-FULL_PAGE/
 ├── public/                    # Static assets and Plotly HTML exports
 ├── src/                       
@@ -67,7 +66,6 @@ P4AIDS-FULL_PAGE/
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
 └── vite.config.ts             # Vite configuration
-\`\`\`
 
 ---
 

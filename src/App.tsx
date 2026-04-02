@@ -8,7 +8,8 @@ type View = 'home' | 'spotify' | 'hate';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('home');
-
+  {currentView === 'hate' && <Hate onBack={() => setCurrentView('home')} />}
+  {currentView === 'spotify' && <SpotifyEDA onBack={() => setCurrentView('home')} />}
   return (
     <div className="min-h-screen bg-black">
       <AnimatePresence mode="wait">
