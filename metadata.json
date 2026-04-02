@@ -1,5 +1,5 @@
 {
-  "name": "Data Explorer: Spotify & Wikipedia EDA",
-  "description": "A unified portal for exploratory data analysis of Spotify music trends and Wikipedia knowledge patterns.",
+  "name": "Data Explorer: Spotify & Hate Speech EDA",
+  "description": "A unified portal for exploratory data analysis of Spotify music trends and hate speech detection.",
   "requestFramePermissions": []
 }

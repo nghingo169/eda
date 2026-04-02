@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface HomeProps {
-  onSelect: (view: 'spotify' | 'wikipedia') => void;
+  onSelect: (view: 'spotify') => void;
 }
 
 export default function Home({ onSelect }: HomeProps) {
@@ -88,43 +88,7 @@ export default function Home({ onSelect }: HomeProps) {
                   Explore Dashboard <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-500" />
                 </div>
               </div>
-            </motion.div>
-
-            {/* Wikipedia Card */}
-            <motion.div
-              whileHover={{ y: -8 }}
-              className="group relative p-10 rounded-4xl border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-blue-500/30 text-left overflow-hidden cursor-pointer"
-              onClick={() => onSelect('wikipedia')}
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
-                <Globe size={200} />
-              </div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-black transition-all duration-500">
-                    <Globe size={28} />
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
-                    Multimodal Data
-                  </span>
-                </div>
-                <h3 className="text-3xl font-bold mb-4 group-hover:text-blue-400 transition-colors">Wikipedia Growth</h3>
-                <p className="text-zinc-500 text-sm mb-8 leading-relaxed">
-                  Exploration of knowledge distribution, collaborative edit patterns, and information expansion in 300+ languages.
-                </p>
-                <ul className="space-y-3 mb-10">
-                  {['Textual Content Analysis', 'Temporal Growth Mapping', 'Category Network Graphs'].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs text-zinc-400">
-                      <div className="w-1 h-1 rounded-full bg-blue-500" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center gap-2 text-white font-bold text-sm">
-                  Explore Dashboard <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-500" />
-                </div>
-              </div>
-            </motion.div>
+            </motion.div>            
           </div>
         </motion.div>
       </header>

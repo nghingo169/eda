@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Home from './Home';
 import SpotifyEDA from './pages/1_spotify/SpotifyEDA';
-import WikipediaEDA from './pages/2_wikipedia/WikipediaEDA';
 
 type View = 'home' | 'spotify' | 'wikipedia';
 
@@ -36,17 +35,6 @@ export default function App() {
           </motion.div>
         )}
 
-        {currentView === 'wikipedia' && (
-          <motion.div
-            key="wikipedia"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4 }}
-          >
-            <WikipediaEDA onBack={() => setCurrentView('home')} />
-          </motion.div>
-        )}
       </AnimatePresence>
     </div>
   );
