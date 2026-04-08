@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Plotly from 'plotly.js-dist-min';
-import createPlotlyComponent from 'react-plotly.js/factory';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-python';
-import 'prismjs/themes/prism-tomorrow.css';
+import PlotlyChart from 'react-plotly.js';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   AlertTriangle,
   ArrowLeft,
   BarChart3, 
@@ -14,7 +10,6 @@ import {
   Clipboard, 
   ClipboardCheck, 
   Database, 
-  FileCode, 
   Info, 
   Layers, 
   LayoutDashboard, 
@@ -27,22 +22,73 @@ import {
   Zap
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import edaData from './data/eda_spotify_tracks.json';
+import audioProfileRadar from './data/audio_profile_radar.json';
+import categoricalDistributionKey from './data/categorical_distribution_key.json';
+import categoricalDistributionMode from './data/categorical_distribution_mode.json';
+import distributionOfSongsByArtistCount from './data/distribution_of_songs_by_artist_count.json';
+import distributionOfSongsPerArtist from './data/distribution_of_songs_per_artist.json';
+import fridayPhenomenon from './data/friday_phenomenon.json';
+import hitPredictorsCorrelation from './data/hit_predictors_correlation.json';
+import musicFeaturesTrendOverTime from './data/music_features_trend_over_time.json';
+import numericalAudioFeaturesDistribution from './data/numerical_audio_features_distribution.json';
+import platformAnalysis from './data/platform_analysis.json';
+import platformStreamCorrelation from './data/platform_stream_correlation.json';
+import seasonalitySongsByMonth from './data/seasonality_songs_by_month.json';
+import sonicMoodScatter from './data/sonic_mood_scatter.json';
+import topArtistsByStreams from './data/top_artists_by_streams.json';
 
-const Plot = createPlotlyComponent(Plotly);
+const SPOTIFY_PLOT_CONFIG_BASE = {
+  displayModeBar: false,
+  displaylogo: false,
+  responsive: true,
+} as const;
 
-interface CodeExample {
-  title: string;
-  plotly: string;
-  matplotlib: string;
-  seaborn: string;
-}
+const normalizeSpotifyPlotLayout = (rawLayout: any) => {
+  const layout = rawLayout && typeof rawLayout === 'object' ? { ...rawLayout } : {};
+  const margin = layout.margin && typeof layout.margin === 'object' ? { ...layout.margin } : {};
+  layout.margin = {
+    l: Math.max(56, typeof margin.l === 'number' ? margin.l : 56),
+    r: Math.max(24, typeof margin.r === 'number' ? margin.r : 24),
+    t: Math.max(30, typeof margin.t === 'number' ? margin.t : 30),
+    b: Math.max(64, typeof margin.b === 'number' ? margin.b : 64),
+  };
 
-interface EdaData {
-  [key: string]: CodeExample;
-}
+  if (layout.legend?.orientation === 'h') {
+    layout.margin.b = Math.max(layout.margin.b, 84);
+  }
 
-const typedEdaData = edaData as unknown as EdaData;
+  for (const [key, value] of Object.entries(layout)) {
+    if (!/^xaxis\d*$/.test(key) && !/^yaxis\d*$/.test(key)) continue;
+    const axis = value && typeof value === 'object' ? { ...(value as Record<string, any>) } : {};
+    const title =
+      axis.title && typeof axis.title === 'object'
+        ? { ...(axis.title as Record<string, any>) }
+        : axis.title !== undefined
+          ? { text: axis.title }
+          : {};
+    axis.automargin = true;
+    axis.ticklabelstandoff = typeof axis.ticklabelstandoff === 'number' ? Math.max(axis.ticklabelstandoff, 6) : 6;
+    if (title.text !== undefined) {
+      const titleObj = title as Record<string, any>;
+      titleObj.standoff = typeof titleObj.standoff === 'number' ? Math.max(titleObj.standoff, 18) : 18;
+      axis.title = titleObj;
+    }
+    layout[key] = axis;
+  }
+
+  return layout;
+};
+
+const Plot = ({ layout, config, className, ...rest }: any) => (
+  <div className="w-full rounded-2xl bg-white/80 p-2 pt-3 md:p-3 md:pt-4 ring-1 ring-zinc-200/70">
+    <PlotlyChart
+      {...rest}
+      layout={normalizeSpotifyPlotLayout(layout)}
+      config={{ ...SPOTIFY_PLOT_CONFIG_BASE, ...(config ?? {}) }}
+      className={cn('w-full', className)}
+    />
+  </div>
+);
 
 const HIT_SONGS_SAMPLES = [
   { id: 648, track: 'MAMIII', artist: 'Karol G, Becky G', streams: '716,591,492', dance: 84, energy: 70 },
@@ -338,6 +384,259 @@ const OUTLIER_ANALYSIS = [
   { feature: 'valence_%', count: 0, percentage: '0.00', severity: 'Low' },
 ];
 
+// Hard-coded from notebook export in data folder:
+// - streams_distribution_by_artist_count_boxplot.json (median/IQR by artist_count)
+// - average_streams_solo_vs_collaboration_bar.json (mean streams by group)
+const ARTIST_COUNT_STREAMS_SUMMARY = [
+  { artistCount: 1, n: 586, q1: 167419464.25, median: 333619963.0, q3: 795335524.0 },
+  { artistCount: 2, n: 254, q1: 112704676.25, median: 249408543.5, q3: 607761907.5 },
+  { artistCount: 3, n: 85, q1: 121189256.0, median: 231332117.0, q3: 436695353.0 },
+  { artistCount: 4, n: 15, q1: 112710236.5, median: 159240673.0, q3: 380316239.5 },
+  { artistCount: 5, n: 5, q1: 54225632.0, median: 133753727.0, q3: 223582566.0 },
+  { artistCount: 6, n: 3, q1: 61106170.5, median: 120847157.0, q3: 130517087.5 },
+  { artistCount: 7, n: 2, q1: 292230117.25, median: 339060067.5, q3: 385890017.75 },
+  { artistCount: 8, n: 2, q1: 148171793.25, median: 173221173.5, q3: 198270553.75 },
+] as const;
+
+const SOLO_VS_COLLABORATION_MEAN_STREAMS = [
+  { group: 'Solo', meanStreams: 568211662.2098976 },
+  { group: 'Collaboration', meanStreams: 427559547.77868855 },
+] as const;
+
+type PlotFigure = {
+  data: any[];
+  layout?: Record<string, any>;
+};
+
+type TopMetricItem = {
+  name: string;
+  artist: string;
+  val: string;
+  streams: string;
+};
+
+type ArtistMarketShare = {
+  name: string;
+  streams: string;
+  pct: number;
+};
+
+type CollaborationBucket = {
+  count: number;
+  tracks: number;
+};
+
+const RAW_TRACK_COUNT = 953;
+const CLEAN_TRACK_COUNT = 952;
+const FEATURE_COUNTS = FEATURE_SCHEMA.reduce(
+  (counts, feature) => {
+    if (feature.type === 'Numerical') {
+      counts.numerical += 1;
+    } else {
+      counts.categorical += 1;
+    }
+    return counts;
+  },
+  { numerical: 0, categorical: 0 }
+);
+
+const STREAMS_MEAN = 514.14 * 1_000_000;
+const TOTAL_DATASET_STREAMS = STREAMS_MEAN * CLEAN_TRACK_COUNT;
+
+const toFigure = (figure: unknown) => figure as PlotFigure;
+const toCompactBillions = (value: number) => `${(value / 1_000_000_000).toFixed(1)}B`;
+const toPercent = (value: number, total: number, digits = 1) => `${((value / total) * 100).toFixed(digits)}%`;
+const formatFieldLabel = (label: string) =>
+  label
+    .replace(/^in_/, '')
+    .replace(/_%$/, ' %')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .replace(/\bBpm\b/g, 'BPM');
+
+const numericalAudioFigure = toFigure(numericalAudioFeaturesDistribution);
+const AUDIO_DISTRIBUTION_FEATURES = [
+  'Danceability %',
+  'Energy %',
+  'Valence %',
+  'Acousticness %',
+  'Instrumentalness %',
+  'Liveness %',
+  'Speechiness %',
+];
+const audioDistributionTraces = numericalAudioFigure.data
+  .filter((trace) => AUDIO_DISTRIBUTION_FEATURES.includes(trace.name))
+  .map((trace) => ({
+    ...trace,
+    opacity: 0.7,
+    nbinsx: 40,
+  }));
+
+const audioDistributionFacetTraces = audioDistributionTraces.map((trace, idx) => {
+  const panel = idx + 1;
+  return {
+    ...trace,
+    xaxis: panel === 1 ? 'x' : `x${panel}`,
+    yaxis: panel === 1 ? 'y' : `y${panel}`,
+    showlegend: false,
+  };
+});
+
+const audioDistributionFacetLayout = (() => {
+  const panelCount = Math.max(1, audioDistributionTraces.length);
+  const columns = 3;
+  const rows = Math.ceil(panelCount / columns);
+  const layout: Record<string, any> = {
+    autosize: true,
+    height: 220 * rows + 160,
+    barmode: 'overlay',
+    grid: { rows, columns, pattern: 'independent' },
+    margin: { l: 42, r: 20, t: 36, b: 62 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    annotations: audioDistributionTraces.map((trace, idx) => ({
+      xref: idx === 0 ? 'x domain' : `x${idx + 1} domain`,
+      yref: idx === 0 ? 'y domain' : `y${idx + 1} domain`,
+      x: 0.5,
+      y: 1.08,
+      text: `<b>${trace.name}</b>`,
+      showarrow: false,
+      font: { size: 12, color: '#18181b' },
+    })),
+  };
+
+  for (let i = 1; i <= panelCount; i++) {
+    const xKey = i === 1 ? 'xaxis' : `xaxis${i}`;
+    const yKey = i === 1 ? 'yaxis' : `yaxis${i}`;
+    layout[xKey] = { title: 'Value (%)', gridcolor: '#e5e7eb', zeroline: false };
+    layout[yKey] = { title: 'Frequency', gridcolor: '#e5e7eb', zeroline: false };
+  }
+  return layout;
+})();
+
+const keyDistributionTrace = toFigure(categoricalDistributionKey).data[0];
+const modeDistributionTrace = toFigure(categoricalDistributionMode).data[0];
+const artistCountDistributionTrace = toFigure(distributionOfSongsByArtistCount).data[0];
+const songsPerArtistDistributionTrace = toFigure(distributionOfSongsPerArtist).data[0];
+const UNIQUE_ARTIST_COUNT = songsPerArtistDistributionTrace.x.length;
+
+const platformAnalysisFigure = toFigure(platformAnalysis);
+const platformHeatmapTrace = {
+  ...platformAnalysisFigure.data[0],
+  x: platformAnalysisFigure.data[0].x.map((label: string) => formatFieldLabel(label)),
+  y: platformAnalysisFigure.data[0].y.map((label: string) => formatFieldLabel(label)),
+};
+const platformCountDistributionTrace = platformAnalysisFigure.data[1];
+const platformCountDistributionNonZero = {
+  ...platformCountDistributionTrace,
+  x: platformCountDistributionTrace.x.filter((count: number) => count > 0),
+  y: platformCountDistributionTrace.y.filter((_: number, idx: number) => platformCountDistributionTrace.x[idx] > 0),
+};
+const platformStreamCorrelationTrace = {
+  ...toFigure(platformStreamCorrelation).data[0],
+  y: toFigure(platformStreamCorrelation).data[0].y.map((label: string) => formatFieldLabel(label)),
+  marker: { color: '#1DB954' },
+};
+
+const hitPredictorTraces = toFigure(hitPredictorsCorrelation).data.map((trace, index) => ({
+  ...trace,
+  name: index === 0 ? 'Negative Correlation' : 'Positive Correlation',
+  y: trace.y.map((label: string) => formatFieldLabel(label)),
+  marker: { color: index === 0 ? '#f43f5e' : '#1DB954' },
+}));
+
+const topArtistsRawTrace = toFigure(topArtistsByStreams).data[0];
+const topArtistsTrace = {
+  ...topArtistsRawTrace,
+  x: topArtistsRawTrace.x.map((value: number) => value / 1_000_000_000),
+  marker: {
+    color: topArtistsRawTrace.x.map((value: number) => value / 1_000_000_000),
+    colorscale: 'Viridis',
+    reversescale: true,
+  },
+  text: topArtistsRawTrace.x.map((value: number) => toPercent(value, TOTAL_DATASET_STREAMS)),
+};
+
+const topArtistMarketShare: ArtistMarketShare[] = topArtistsRawTrace.y.map((name: string, index: number) => {
+  const streams = topArtistsRawTrace.x[index] as number;
+  return {
+    name,
+    streams: toCompactBillions(streams),
+    pct: Number(((streams / TOTAL_DATASET_STREAMS) * 100).toFixed(2)),
+  };
+});
+
+const top10ArtistsShare = topArtistMarketShare.reduce((sum: number, artist: ArtistMarketShare) => sum + artist.pct, 0);
+
+const playlistTop10Series: { key: string; label: string; color: string; items: TopMetricItem[] }[] = [
+  { key: 'spotify', label: 'Spotify', color: '#1DB954', items: TOP_10_METRICS.spotifyPlaylists },
+  { key: 'apple', label: 'Apple', color: '#ff3b30', items: TOP_10_METRICS.applePlaylists },
+  { key: 'deezer', label: 'Deezer', color: '#007aff', items: TOP_10_METRICS.deezerPlaylists },
+];
+
+const chartTop10Series: { key: string; label: string; color: string; items: TopMetricItem[] }[] = [
+  { key: 'spotify', label: 'Spotify', color: '#1DB954', items: TOP_10_METRICS.spotifyCharts },
+  { key: 'apple', label: 'Apple', color: '#ff3b30', items: TOP_10_METRICS.appleCharts },
+  { key: 'deezer', label: 'Deezer', color: '#007aff', items: TOP_10_METRICS.deezerCharts },
+];
+
+const buildCrossPlatformTop10Rows = (series: { key: string; label: string; items: TopMetricItem[] }[]) => {
+  const rankMap = new Map<string, { name: string; artist: string; ranks: Record<string, number | null> }>();
+  for (const s of series) {
+    s.items.forEach((item, idx) => {
+      const k = `${item.name}::${item.artist}`;
+      if (!rankMap.has(k)) {
+        rankMap.set(k, { name: item.name, artist: item.artist, ranks: {} });
+      }
+      rankMap.get(k)!.ranks[s.key] = idx + 1;
+    });
+  }
+
+  const rows = Array.from(rankMap.values()).map((r) => ({
+    ...r,
+    presentOn: series.reduce((n, s) => n + (r.ranks[s.key] ? 1 : 0), 0),
+    bestRank: Math.min(...series.map((s) => r.ranks[s.key] ?? 999)),
+  }));
+
+  return rows.sort((a, b) => b.presentOn - a.presentOn || a.bestRank - b.bestRank).slice(0, 15);
+};
+
+const playlistTop10ComparisonRows = buildCrossPlatformTop10Rows(playlistTop10Series);
+const chartTop10ComparisonRows = buildCrossPlatformTop10Rows(chartTop10Series);
+
+const musicFeatureTrendTraces = toFigure(musicFeaturesTrendOverTime).data;
+const seasonalityTrace = toFigure(seasonalitySongsByMonth).data[0];
+const fridayPhenomenonTrace = toFigure(fridayPhenomenon).data[0];
+
+const sonicMoodTraces = toFigure(sonicMoodScatter).data.map((trace) => ({
+  ...trace,
+  marker: {
+    ...trace.marker,
+    sizemode: 'diameter',
+    sizeref: 2,
+    opacity: 0.65,
+    line: { color: 'white', width: 1 },
+  },
+}));
+
+const audioProfileTraces = toFigure(audioProfileRadar).data.map((trace) => ({
+  ...trace,
+  theta: trace.theta.map((label: string) => formatFieldLabel(label)),
+  fillcolor: trace.name === 'Mega Hit (Top Quartile)' ? 'rgba(29, 185, 84, 0.28)' : 'rgba(25, 20, 20, 0.24)',
+}));
+
+const collaborationDistribution: CollaborationBucket[] = artistCountDistributionTrace.x.map((count: number, index: number) => ({
+  count,
+  tracks: artistCountDistributionTrace.y[index] as number,
+}));
+
+const soloTracks = collaborationDistribution.find((item: CollaborationBucket) => item.count === 1)?.tracks ?? 0;
+const duoTracks = collaborationDistribution.find((item: CollaborationBucket) => item.count === 2)?.tracks ?? 0;
+const groupTracks = collaborationDistribution
+  .filter((item: CollaborationBucket) => item.count >= 3)
+  .reduce((sum: number, item: CollaborationBucket) => sum + item.tracks, 0);
+const collaborativeTracks = duoTracks + groupTracks;
+
 // --- Components ---
 
 const StatCard = ({ value, label, color = 'spotify' }: { value: string | number, label: string, color?: 'spotify' | 'teal' | 'orange' }) => {
@@ -389,20 +688,74 @@ const Top10Table = ({ title, data, color = '#1DB954', unit = '' }: { title: stri
   </div>
 );
 
+const RankComparisonTable = ({
+  title,
+  rows,
+  series,
+}: {
+  title: string;
+  rows: { name: string; artist: string; ranks: Record<string, number | null>; presentOn: number }[];
+  series: { key: string; label: string; color: string }[];
+}) => (
+  <div className="space-y-4">
+    <h4 className="font-black text-zinc-900 text-lg">{title}</h4>
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-zinc-900 text-white">
+            <tr>
+              <th className="px-4 py-3 text-[10px] uppercase tracking-widest">Song</th>
+              {series.map((s) => (
+                <th key={s.key} className="px-3 py-3 text-center text-[10px] uppercase tracking-widest">
+                  {s.label} Rank
+                </th>
+              ))}
+              <th className="px-3 py-3 text-center text-[10px] uppercase tracking-widest">Coverage</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {rows.map((row) => (
+              <tr key={`${row.name}-${row.artist}`} className="hover:bg-zinc-50">
+                <td className="px-4 py-3">
+                  <div className="font-semibold text-zinc-900 truncate max-w-64" title={row.name}>
+                    {row.name}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 truncate max-w-64">{row.artist}</div>
+                </td>
+                {series.map((s) => {
+                  const rank = row.ranks[s.key];
+                  return (
+                    <td key={`${row.name}-${s.key}`} className="px-3 py-3 text-center">
+                      {rank ? (
+                        <span className="inline-flex min-w-9 items-center justify-center rounded-full px-2 py-1 text-xs font-bold text-white" style={{ backgroundColor: s.color }}>
+                          #{rank}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400">-</span>
+                      )}
+                    </td>
+                  );
+                })}
+                <td className="px-3 py-3 text-center font-mono text-xs text-zinc-700">{row.presentOn}/3</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
 const SectionHeader = ({ 
   title, 
   icon: Icon, 
   isOpen, 
   onToggle, 
-  onViewCode,
-  showCodeButton = true
 }: { 
   title: string, 
   icon: any, 
   isOpen: boolean, 
   onToggle: () => void,
-  onViewCode: () => void
-  showCodeButton?: boolean
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b-4 border-[#1DB954] pb-2">
@@ -418,78 +771,7 @@ const SectionHeader = ({
           {isOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </h2>
       </div>
-        {showCodeButton && (
-        <div className="flex gap-2">
-          <button 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              onViewCode(); 
-            }}
-            className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-zinc-800 transition-colors shadow-md"
-          >
-            <FileCode size={16} /> View Code
-          </button>
-        </div>
-            )}
       </div>
-  );
-};
-
-const CodePanel = ({ sectionKey, isOpen }: { sectionKey: string, isOpen: boolean }) => {
-  const [activeTab, setActiveTab] = useState<'plotly' | 'matplotlib' | 'seaborn'>('plotly');
-  const data = typedEdaData[sectionKey];
-
-  useEffect(() => {
-    if (isOpen) {
-      Prism.highlightAll();
-    }
-  }, [isOpen, activeTab]);
-
-  if (!data) return null;
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          className="overflow-hidden mb-8"
-        >
-          <div className="bg-zinc-50 border-l-8 border-[#1DB954] rounded-r-xl p-6 shadow-inner">
-            <h3 className="text-xl font-bold text-[#1DB954] mb-4 flex items-center gap-2">
-              <FileCode size={20} /> {data.title}
-            </h3>
-            
-            <div className="bg-zinc-900 rounded-xl overflow-hidden shadow-xl">
-              <div className="flex border-b border-zinc-800">
-                {(['plotly', 'matplotlib', 'seaborn'] as const).map((lib) => (
-                  <button
-                    key={lib}
-                    onClick={() => setActiveTab(lib)}
-                    className={cn(
-                      "flex-1 py-3 text-sm font-bold uppercase tracking-widest transition-all",
-                      activeTab === lib 
-                        ? "text-white bg-zinc-800 border-b-2 border-[#1DB954]" 
-                        : "text-zinc-500 hover:text-zinc-300"
-                    )}
-                  >
-                    {lib}
-                  </button>
-                ))}
-              </div>
-              
-              <pre className="m-0 p-6 max-h-100 overflow-auto leading-relaxed">
-                <code className="language-python">
-                  {data[activeTab]}
-                </code>
-              </pre>
-
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 };
 
@@ -509,47 +791,14 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
     summary: true,
   });
 
-  const [codePanels, setCodePanels] = useState<Record<string, boolean>>({});
-
-  // Helper to generate realistic distribution data for visualizations
-  const generateDistribution = (mean: number, std: number, count: number, min = 0, max = 100) => {
-    return Array.from({ length: count }, () => {
-      // Box-Muller transform for normal distribution
-      let u = 0, v = 0;
-      while (u === 0) u = Math.random();
-      while (v === 0) v = Math.random();
-      let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-      num = num * std + mean;
-      return Math.max(min, Math.min(max, num));
-    });
-  };
-
-  // Pre-generate data for Stage 4 & 6 to ensure consistency
-  const bpmData = generateDistribution(122.54, 28.06, 952, 60, 210);
-  const danceData = generateDistribution(66.97, 14.63, 952, 20, 100);
-  const energyData = generateDistribution(64.28, 16.55, 952, 10, 100);
-  const valenceData = generateDistribution(51.43, 23.48, 952, 0, 100);
-  const artistSongCounts = Array.from({ length: 644 }, (_, i) => {
-    if (i === 0) return 34; // Taylor Swift
-    if (i === 1) return 22; // The Weeknd
-    if (i < 10) return Math.floor(Math.random() * 10) + 10;
-    if (i < 50) return Math.floor(Math.random() * 5) + 2;
-    return 1;
-  });
   const [showFullSchema, setShowFullSchema] = useState(false);
   const [showFullStats, setShowFullStats] = useState(false);
   const [showFullOutliers, setShowFullOutliers] = useState(false);
+  const [showPlatformPlaylistTop10, setShowPlatformPlaylistTop10] = useState(false);
+  const [showPlatformChartTop10, setShowPlatformChartTop10] = useState(false);
   const [showAudioTop10, setShowAudioTop10] = useState(false);
   const toggleSection = (id: keyof typeof sections) => {
     setSections(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const toggleCodePanel = (id: string) => {
-    setCodePanels(prev => {
-      const next = { ...prev, [id]: !prev[id] };
-      console.log('toggleCodePanel:', id, next[id], next);
-      return next;
-    });
   };
 
   const collapseAll = () => {
@@ -560,12 +809,6 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
   const expandAll = () => {
     const opened = Object.keys(sections).reduce((acc, key) => ({ ...acc, [key]: true }), {});
     setSections(opened as any);
-  };
-
-  const toggleAllCodePanels = () => {
-    const anyOpen = Object.values(codePanels).some(v => v);
-    const newState = Object.keys(typedEdaData).reduce((acc, key) => ({ ...acc, [key]: !anyOpen }), {});
-    setCodePanels(newState);
   };
 
   return (
@@ -590,11 +833,11 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               SPOTIFY TOP SONGS 2023
             </h1>
             <p className="text-xl text-zinc-400 font-medium max-w-2xl mx-auto">
-              Comprehensive Exploratory Data Analysis with Interactive Visualizations & Tutorials
+              Exploratory data analysis with interactive visualizations and practical interpretation.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-zinc-500">
-              <span className="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">952 Tracks</span>
-              <span className="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">24 Features</span>
+              <span className="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{CLEAN_TRACK_COUNT} Tracks</span>
+              <span className="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">{FEATURE_SCHEMA.length} Features</span>
               <span className="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">Source: Kaggle</span>
             </div>
           </motion.div>
@@ -611,12 +854,9 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
           <button onClick={expandAll} className="px-6 py-2 rounded-full border-2 border-[#1DB954] text-[#1DB954] font-bold hover:bg-[#1DB954] hover:text-white transition-all flex items-center gap-2 text-sm">
             <LayoutDashboard size={16} /> Expand All
           </button>
-          <button onClick={toggleAllCodePanels} className="px-6 py-2 rounded-full border-2 border-zinc-900 text-zinc-900 font-bold hover:bg-zinc-900 hover:text-white transition-all flex items-center gap-2 text-sm">
-            <FileCode size={16} /> Toggle Code Panels
-          </button>
         </div>
 
-        <main className="p-8 md:p-12 space-y-12">
+        <main className="p-8 md:p-10 space-y-10">
           
           {/* Methodology */}
           <section id="methodology" className="scroll-mt-24">
@@ -625,8 +865,6 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Info} 
               isOpen={sections.methodology} 
               onToggle={() => toggleSection('methodology')}
-              onViewCode={() => {}} 
-              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.methodology && (
@@ -638,7 +876,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                 >
                   <p className="text-zinc-600 mb-6 text-lg leading-relaxed">
                     This report explores the "Top Spotify Songs 2023" dataset, focusing on audio characteristics, 
-                    platform presence, and factors that contribute to a track becoming a "Mega Hit".
+                    platform presence and factors that contribute to a track becoming a "Mega Hit".
                   </p>
                   <div className="grid md:grid-cols-2 gap-8">
                     <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
@@ -647,7 +885,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                       </h4>
                       <ul className="space-y-3 text-zinc-600">
                         <li className="flex items-start gap-2"><span className="text-[#1DB954] font-bold">•</span> <strong>Data Quality:</strong> Handling missing values and structural noise.</li>
-                        <li className="flex items-start gap-2"><span className="text-[#1DB954] font-bold">•</span> <strong>Audio Profiling:</strong> Analyzing BPM, Energy, and Danceability.</li>
+                        <li className="flex items-start gap-2"><span className="text-[#1DB954] font-bold">•</span> <strong>Audio Profiling:</strong> Analyzing BPM, Energy and Danceability.</li>
                         <li className="flex items-start gap-2"><span className="text-[#1DB954] font-bold">•</span> <strong>Platform Impact:</strong> Correlation between playlist presence and streams.</li>
                         <li className="flex items-start gap-2"><span className="text-[#1DB954] font-bold">•</span> <strong>Temporal Trends:</strong> Seasonality and evolution of music features.</li>
                       </ul>
@@ -671,8 +909,6 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={LayoutDashboard} 
               isOpen={sections.overview} 
               onToggle={() => toggleSection('overview')}
-              onViewCode={() => {}} 
-              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.overview && (
@@ -683,10 +919,10 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   className="overflow-hidden"
                 >
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard value="952" label="Total Tracks" />
-                    <StatCard value="24" label="Features" />
-                    <StatCard value="17" label="Numerical" />
-                    <StatCard value="7" label="Categorical" />
+                    <StatCard value={CLEAN_TRACK_COUNT} label="Total Tracks" />
+                    <StatCard value={FEATURE_SCHEMA.length} label="Features" />
+                    <StatCard value={FEATURE_COUNTS.numerical} label="Numerical" />
+                    <StatCard value={FEATURE_COUNTS.categorical} label="Categorical" />
                   </div>
                   
                   {/* Feature Dictionary Section */}
@@ -754,16 +990,14 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Database} 
               isOpen={sections.s1} 
               onToggle={() => toggleSection('s1')}
-              onViewCode={() => toggleCodePanel('dataset_overview')}
             />
-            <CodePanel sectionKey="dataset_overview" isOpen={codePanels['dataset_overview']} />
             <AnimatePresence>
               {sections.s1 && (
                 <motion.div 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden space-y-10"
+                  className="overflow-hidden space-y-8"
                 >
                   {/* Dataset Overview Section (Matching Image Style) */}
                   <div className="space-y-6">
@@ -776,11 +1010,11 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                     
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                       {[
-                        { label: 'Total Samples', val: '953' },
-                        { label: 'Cleaned Samples', val: '952' },
-                        { label: 'Total Features', val: '24' },
-                        { label: 'Numerical Features', val: '17' },
-                        { label: 'Categorical Features', val: '7' },
+                        { label: 'Total Samples', val: String(RAW_TRACK_COUNT) },
+                        { label: 'Cleaned Samples', val: String(CLEAN_TRACK_COUNT) },
+                        { label: 'Total Features', val: String(FEATURE_SCHEMA.length) },
+                        { label: 'Numerical Features', val: String(FEATURE_COUNTS.numerical) },
+                        { label: 'Categorical Features', val: String(FEATURE_COUNTS.categorical) },
                       ].map((card, i) => (
                         <div key={i} className="bg-zinc-900 p-8 rounded-2xl text-center shadow-xl text-white transform transition-all hover:scale-105 border-b-4 border-[#1DB954]">
                           <div className="text-4xl font-black mb-2 text-[#1DB954]">{card.val}</div>
@@ -790,13 +1024,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                     </div>
 
                     <div className="mt-8">
-                      <h4 className="text-sm font-black text-[#1DB954] mb-4 uppercase tracking-tighter">Target Variable: streams</h4>
+                      <h4 className="text-sm font-black text-[#1DB954] mb-4 uppercase tracking-tighter">Target Variable: Streams</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-zinc-900 p-10 rounded-3xl text-center shadow-2xl text-white relative overflow-hidden group border border-zinc-800">
                           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 group-hover:scale-110 transition-all text-[#1DB954]">
                             <TrendingUp size={80} />
                           </div>
-                          <div className="text-5xl font-black mb-2 tracking-tighter text-[#1DB954]">489M</div>
+                          <div className="text-5xl font-black mb-2 tracking-tighter text-[#1DB954]">514M</div>
                           <div className="text-xs uppercase tracking-widest font-bold opacity-50">Average Streams per Track</div>
                         </div>
                         <div className="bg-[#1DB954] p-10 rounded-3xl text-center shadow-2xl text-black relative overflow-hidden group">
@@ -875,7 +1109,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Zap size={24} />
                       </div>
                       <h3 className="text-2xl font-black text-zinc-900 tracking-tight">
-                        TOP 10 SONGS FOR EACH NUMERICAL FEATURE
+                        Top 10 Songs by Numerical Feature
                       </h3>
                     </div>
                     
@@ -886,16 +1120,60 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Top10Table title="Top 10 by Shazam Charts" data={TOP_10_METRICS.shazamCharts} color="#0088ff" />
                       </div>
 
-                      <div className="grid lg:grid-cols-3 gap-8">
-                        <Top10Table title="Top 10 by Spotify Playlists" data={TOP_10_METRICS.spotifyPlaylists} color="#1DB954" />
-                        <Top10Table title="Top 10 by Apple Playlists" data={TOP_10_METRICS.applePlaylists} color="#ff3b30" />
-                        <Top10Table title="Top 10 by Deezer Playlists" data={TOP_10_METRICS.deezerPlaylists} color="#007aff" />
+                      <div className="space-y-4 pt-2 border-t border-zinc-200">
+                        <button
+                          onClick={() => setShowPlatformPlaylistTop10((v) => !v)}
+                          className="flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-zinc-800 transition-colors shadow-lg group"
+                        >
+                          <Layers size={18} className={showPlatformPlaylistTop10 ? "text-[#1DB954]" : "text-zinc-400"} />
+                          {showPlatformPlaylistTop10 ? 'Hide Playlist Top 10 by Platform' : 'Show Playlist Top 10 by Platform'}
+                          <ChevronDown size={18} className={cn("transition-transform duration-300", showPlatformPlaylistTop10 ? "rotate-180 text-[#1DB954]" : "text-zinc-400")} />
+                        </button>
+                        <AnimatePresence>
+                          {showPlatformPlaylistTop10 && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden space-y-6"
+                            >
+                              <RankComparisonTable title="Top 10 Comparison by Platform (Playlists)" rows={playlistTop10ComparisonRows} series={playlistTop10Series} />
+                              <div className="grid lg:grid-cols-3 gap-8">
+                                <Top10Table title="Top 10 by Spotify Playlists" data={TOP_10_METRICS.spotifyPlaylists} color="#1DB954" />
+                                <Top10Table title="Top 10 by Apple Playlists" data={TOP_10_METRICS.applePlaylists} color="#ff3b30" />
+                                <Top10Table title="Top 10 by Deezer Playlists" data={TOP_10_METRICS.deezerPlaylists} color="#007aff" />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
-                      <div className="grid lg:grid-cols-3 gap-8">
-                        <Top10Table title="Top 10 by Spotify Charts" data={TOP_10_METRICS.spotifyCharts} color="#1DB954" />
-                        <Top10Table title="Top 10 by Apple Charts" data={TOP_10_METRICS.appleCharts} color="#ff3b30" />
-                        <Top10Table title="Top 10 by Deezer Charts" data={TOP_10_METRICS.deezerCharts} color="#007aff" />
+                      <div className="space-y-4 pt-2 border-t border-zinc-200">
+                        <button
+                          onClick={() => setShowPlatformChartTop10((v) => !v)}
+                          className="flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-zinc-800 transition-colors shadow-lg group"
+                        >
+                          <Layers size={18} className={showPlatformChartTop10 ? "text-[#1DB954]" : "text-zinc-400"} />
+                          {showPlatformChartTop10 ? 'Hide Chart Top 10 by Platform' : 'Show Chart Top 10 by Platform'}
+                          <ChevronDown size={18} className={cn("transition-transform duration-300", showPlatformChartTop10 ? "rotate-180 text-[#1DB954]" : "text-zinc-400")} />
+                        </button>
+                        <AnimatePresence>
+                          {showPlatformChartTop10 && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden space-y-6"
+                            >
+                              <RankComparisonTable title="Top 10 Comparison by Platform (Charts)" rows={chartTop10ComparisonRows} series={chartTop10Series} />
+                              <div className="grid lg:grid-cols-3 gap-8">
+                                <Top10Table title="Top 10 by Spotify Charts" data={TOP_10_METRICS.spotifyCharts} color="#1DB954" />
+                                <Top10Table title="Top 10 by Apple Charts" data={TOP_10_METRICS.appleCharts} color="#ff3b30" />
+                                <Top10Table title="Top 10 by Deezer Charts" data={TOP_10_METRICS.deezerCharts} color="#007aff" />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Platform Insights Box */}
@@ -906,7 +1184,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <div className="space-y-3 text-sm text-zinc-600 leading-relaxed">
                           <p><strong className="text-zinc-800">1. Dominant Scale (Spotify):</strong> Spotify demonstrates absolute dominance in playlist reach. A single hit track can be featured in over 50,000 Spotify playlists, whereas Apple Music playlist inclusions for the same track rarely exceed a few hundred.</p>
                           <p><strong className="text-zinc-800">2. The Discovery Engine (Shazam):</strong> Shazam charts act as an index for "audience curiosity." Tracks leading on Shazam are frequently viral TikTok hits (e.g., "Makeba") in their explosive growth phase, contrasting with top streamed tracks which are usually established, long-lasting hits.</p>
-                          <p><strong className="text-zinc-800">3. Platform Divergence:</strong> The distinct variations in the Top 10 rankings across Spotify, Apple, and Deezer highlight that each platform possesses a unique user demographic and distinct algorithmic distribution strategies.</p>
+                          <p><strong className="text-zinc-800">3. Platform Divergence:</strong> Differences in Top 10 rankings across Spotify, Apple and Deezer suggest each platform serves different audiences and recommendation dynamics.</p>
                         </div>
                       </div>
                     </div>
@@ -920,7 +1198,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           className="flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-zinc-800 transition-colors shadow-lg group"
                         >
                           <Music size={18} className={showAudioTop10 ? "text-[#1DB954]" : "text-zinc-400"} />
-                          {showAudioTop10 ? 'Hide Audio Features Ranking' : 'View Top 10 by Audio Features'}
+                          {showAudioTop10 ? 'Hide Audio Feature Rankings' : 'View Top 10 by Audio Feature'}
                           <ChevronDown size={18} className={cn("transition-transform duration-300", showAudioTop10 ? "rotate-180 text-[#1DB954]" : "text-zinc-400")} />
                         </button>
                       </div>
@@ -931,7 +1209,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden space-y-10"
+                            className="overflow-hidden space-y-8"
                           >
                             <div className="grid lg:grid-cols-2 gap-10">
                               <Top10Table title="Top 10 by BPM" data={TOP_10_METRICS.bpm} color="#f59e0b" />
@@ -959,7 +1237,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                                 <Zap size={18} className="text-[#1DB954]" /> Audio Feature Insights
                               </h4>
                               <div className="space-y-2 text-sm text-zinc-700 leading-relaxed">
-                                <p>Analyzing the rankings reveals that tracks scoring exceptionally high (over 90%) in <strong>Danceability</strong> and <strong>Energy</strong> are predominantly rooted in Rap/Hip-hop, EDM, and Latin genres. Conversely, the leaders in <strong>Acousticness</strong> consist largely of Pop Ballads and Indie anthems (featuring artists like Taylor Swift and Billie Eilish) which still amass staggering stream counts. This underscores that softer, acoustic-driven music maintains a formidable stronghold in the global streaming market.</p>
+                                <p>Analyzing the rankings reveals that tracks scoring exceptionally high (over 90%) in <strong>Danceability</strong> and <strong>Energy</strong> are predominantly rooted in Rap/Hip-hop, EDM and Latin genres. Conversely, the leaders in <strong>Acousticness</strong> consist largely of Pop Ballads and Indie anthems (featuring artists like Taylor Swift and Billie Eilish) which still amass staggering stream counts. This underscores that softer, acoustic-driven music maintains a formidable stronghold in the global streaming market.</p>
                               </div>
                             </div>
                           </motion.div>
@@ -979,9 +1257,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Zap} 
               isOpen={sections.s2} 
               onToggle={() => toggleSection('s2')}
-              onViewCode={() => toggleCodePanel('missing_values')}
             />
-            <CodePanel sectionKey="missing_values" isOpen={codePanels['missing_values']} />
             <AnimatePresence>
               {sections.s2 && (
                 <motion.div 
@@ -1044,16 +1320,14 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={TrendingUp} 
               isOpen={sections.s3} 
               onToggle={() => toggleSection('s3')}
-              onViewCode={() => toggleCodePanel('descriptive_stats')}
             />
-            <CodePanel sectionKey="descriptive_stats" isOpen={codePanels['descriptive_stats']} />
             <AnimatePresence>
               {sections.s3 && (
                 <motion.div 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden space-y-12"
+                  className="overflow-hidden space-y-8"
                 >
                   {/* Descriptive Stats Table */}
                   <div className="space-y-6">
@@ -1259,9 +1533,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={LayoutDashboard} 
               isOpen={sections.s4} 
               onToggle={() => toggleSection('s4')}
-              onViewCode={() => toggleCodePanel('distribution_scanning')}
             />
-            <CodePanel sectionKey="distribution_scanning" isOpen={codePanels['distribution_scanning']} />
             <AnimatePresence>
               {sections.s4 && (
                 <motion.div 
@@ -1272,45 +1544,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                 >
                   <div className="space-y-8">
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                      <h4 className="font-bold text-zinc-900 mb-6 text-lg">Detailed Numerical Distributions (Audio Features)</h4>
+                      <h4 className="font-bold text-zinc-900 mb-2 text-lg">Audio Feature Distributions</h4>
+                      <p className="text-xs text-zinc-500 mb-6">
+                        Distribution of key audio features across tracks.
+                      </p>
                       <Plot
-                        data={[
-                          {
-                            type: 'histogram',
-                            x: danceData,
-                            name: 'Danceability',
-                            marker: { color: '#1DB954' },
-                            opacity: 0.7,
-                            nbinsx: 40
-                          },
-                          {
-                            type: 'histogram',
-                            x: energyData,
-                            name: 'Energy',
-                            marker: { color: '#191414' },
-                            opacity: 0.7,
-                            nbinsx: 40
-                          },
-                          {
-                            type: 'histogram',
-                            x: valenceData,
-                            name: 'Valence',
-                            marker: { color: '#1ed760' },
-                            opacity: 0.5,
-                            nbinsx: 40
-                          }
-                        ]}
-                        layout={{
-                          autosize: true,
-                          height: 400,
-                          barmode: 'overlay',
-                          margin: { l: 50, r: 30, t: 30, b: 50 },
-                          legend: { orientation: 'h', y: -0.15 },
-                          paper_bgcolor: 'rgba(0,0,0,0)',
-                          plot_bgcolor: 'rgba(0,0,0,0)',
-                          xaxis: { title: 'Feature Value (%)', gridcolor: '#e5e7eb' },
-                          yaxis: { title: 'Frequency', gridcolor: '#e5e7eb' }
-                        }}
+                        data={audioDistributionFacetTraces as any[]}
+                        layout={audioDistributionFacetLayout}
                         config={{ responsive: true }}
                         className="w-full"
                       />
@@ -1323,13 +1563,13 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           data={[
                             {
                               type: 'bar',
-                              x: ['C#', 'G', 'G#', 'F', 'B', 'D', 'A', 'F#', 'E', 'A#', 'D#', 'Unknown'],
-                              y: [120, 96, 91, 89, 81, 81, 75, 73, 62, 57, 33, 95],
+                              x: keyDistributionTrace.x,
+                              y: keyDistributionTrace.y,
                               marker: { color: '#1DB954' },
-                              text: [120, 96, 91, 89, 81, 81, 75, 73, 62, 57, 33, 95],
+                              text: keyDistributionTrace.y,
                               textposition: 'auto',
                             }
-                          ]}
+                          ] as any[]}
                           layout={{
                             autosize: true,
                             height: 350,
@@ -1347,8 +1587,8 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           data={[
                             {
                               type: 'pie',
-                              labels: ['Major', 'Minor'],
-                              values: [550, 402],
+                              labels: modeDistributionTrace.x,
+                              values: modeDistributionTrace.y,
                               marker: { colors: ['#1DB954', '#191414'] },
                               hole: 0.4,
                             }
@@ -1368,26 +1608,26 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                     </div>
 
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                      <h4 className="font-bold text-zinc-900 mb-6 text-lg">Expanded Categorical Distributions (Top 15 Artists)</h4>
+                      <h4 className="font-bold text-zinc-900 mb-6 text-lg">Distribution of Songs by Artist Count</h4>
                       <Plot
                         data={[
                           {
                             type: 'bar',
-                            x: ['Taylor Swift', 'The Weeknd', 'Bad Bunny', 'SZA', 'Harry Styles', 'Kendrick Lamar', 'Morgan Wallen', 'Ed Sheeran', 'Drake', 'Feid', 'Lana Del Rey', 'Karol G', 'Metro Boomin', 'Peso Pluma', 'Arctic Monkeys'],
-                            y: [34, 22, 19, 17, 15, 14, 13, 12, 11, 10, 9, 8, 8, 7, 7],
+                            x: artistCountDistributionTrace.x,
+                            y: artistCountDistributionTrace.y,
                             marker: { 
                               color: '#1DB954',
                               line: { color: '#191414', width: 1 }
                             },
-                            text: [34, 22, 19, 17, 15, 14, 13, 12, 11, 10, 9, 8, 8, 7, 7],
+                            text: artistCountDistributionTrace.y,
                             textposition: 'auto',
                           }
-                        ]}
+                        ] as any[]}
                         layout={{
                           autosize: true,
-                          height: 500,
-                          margin: { l: 50, r: 30, t: 30, b: 120 },
-                          xaxis: { tickangle: -45, title: 'Artist Name' },
+                          height: 420,
+                          margin: { l: 50, r: 30, t: 30, b: 50 },
+                          xaxis: { title: 'Number of Credited Artists' },
                           yaxis: { title: 'Number of Tracks' },
                           paper_bgcolor: 'rgba(0,0,0,0)',
                           plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1399,7 +1639,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
 
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
                       <h4 className="font-bold text-zinc-900 mb-6 text-lg flex items-center gap-2">
-                        <TrendingUp size={20} className="text-[#1DB954]" /> Samples for Hit Songs (Top 25% by Streams)
+                        <TrendingUp size={20} className="text-[#1DB954]" /> Sample Hit Songs (Top-Quartile Streams)
                       </h4>
                       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
                         <table className="w-full text-left border-collapse">
@@ -1445,7 +1685,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <p className="text-xs text-zinc-500 italic flex items-start gap-2">
                           <Info size={14} className="mt-0.5 shrink-0 text-[#1DB954]" />
                           <span>
-                            <strong className="text-zinc-700 not-italic">Representative Sampling:</strong> These tracks are curated samples from the <strong className="text-zinc-900 not-italic">Top 25% (Upper Quartile)</strong> of the dataset, not just the absolute Top 10. This selection illustrates the <strong className="text-zinc-900 not-italic">diversity of success</strong>: while most hits dominate with high danceability (avg &gt; 70%), outliers like "Before You Go" (45%) prove that emotional ballads can also reach the top tier.
+                            <strong className="text-zinc-700 not-italic">Representative Sampling:</strong> These tracks are curated from the <strong className="text-zinc-900 not-italic">top quartile by streams</strong>, not just the absolute Top 10. This highlights <strong className="text-zinc-900 not-italic">different paths to success</strong>: while many hits cluster at high danceability (avg &gt; 70%), outliers like "Before You Go" (45%) show emotional ballads can still break through.
                           </span>
                         </p>
                       </div>
@@ -1463,9 +1703,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Layers} 
               isOpen={sections.s5} 
               onToggle={() => toggleSection('s5')}
-              onViewCode={() => toggleCodePanel('correlation_analysis')}
             />
-            <CodePanel sectionKey="correlation_analysis" isOpen={codePanels['correlation_analysis']} />
             <AnimatePresence>
               {sections.s5 && (
                 <motion.div 
@@ -1477,38 +1715,16 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   <div className="space-y-12">
                     <div className="grid md:grid-cols-2 gap-8">
                       <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-4">Correlation Heatmap: Audio vs Hit Status</h4>
+                        <h4 className="font-bold text-zinc-900 mb-4">Hit Predictors (Top-Quartile Songs)</h4>
                         <Plot
-                          data={[
-                            {
-                              type: 'heatmap',
-                              z: [
-                                [1.00, 0.32, 0.15, -0.28, 0.12],
-                                [0.32, 1.00, 0.40, -0.13, 0.08],
-                                [0.15, 0.40, 1.00, -0.28, 0.06],
-                                [-0.28, -0.13, -0.28, 1.00, -0.04],
-                                [0.12, 0.08, 0.06, -0.04, 1.00]
-                              ],
-                              x: ['Danceability', 'Valence', 'Energy', 'Acousticness', 'Hit Status'],
-                              y: ['Danceability', 'Valence', 'Energy', 'Acousticness', 'Hit Status'],
-                              colorscale: 'RdBu',
-                              reversescale: true,
-                              zmid: 0,
-                              text: [
-                                ['1.00', '0.32', '0.15', '-0.28', '0.12'],
-                                ['0.32', '1.00', '0.40', '-0.13', '0.08'],
-                                ['0.15', '0.40', '1.00', '-0.28', '0.06'],
-                                ['-0.28', '-0.13', '-0.28', '1.00', '-0.04'],
-                                ['0.12', '0.08', '0.06', '-0.04', '1.00']
-                              ],
-                              texttemplate: "%{text}",
-                              showscale: true
-                            }
-                          ]}
+                          data={hitPredictorTraces as any[]}
                           layout={{
                             autosize: true,
-                            height: 350,
-                            margin: { l: 80, r: 20, t: 20, b: 80 },
+                            height: 400,
+                            margin: { l: 130, r: 40, t: 20, b: 40 },
+                            barmode: 'relative',
+                            xaxis: { range: [-0.2, 0.75], gridcolor: '#e5e7eb' },
+                            legend: { orientation: 'h', y: -0.15 },
                             paper_bgcolor: 'rgba(0,0,0,0)',
                             plot_bgcolor: 'rgba(0,0,0,0)',
                           }}
@@ -1517,30 +1733,16 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         />
                       </div>
                       <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-4">Cross-Platform Presence Correlation</h4>
+                        <h4 className="font-bold text-zinc-900 mb-4">Cross-Platform Presence Correlation Matrix</h4>
                         <Plot
                           data={[
                             {
-                              type: 'heatmap',
-                              z: [
-                                [1.00, 0.17, 0.14, 0.38],
-                                [0.17, 1.00, 0.39, 0.38],
-                                [0.14, 0.39, 1.00, 0.45],
-                                [0.38, 0.38, 0.45, 1.00]
-                              ],
-                              x: ["Spotify Charts", "Apple Charts", "Deezer Charts", "Shazam Charts"],
-                              y: ["Spotify Charts", "Apple Charts", "Deezer Charts", "Shazam Charts"],
+                              ...platformHeatmapTrace,
                               colorscale: 'Greens',
-                              text: [
-                                ['1.00', '0.17', '0.14', '0.38'],
-                                ['0.17', '1.00', '0.39', '0.38'],
-                                ['0.14', '0.39', '1.00', '0.45'],
-                                ['0.38', '0.38', '0.45', '1.00']
-                              ],
-                              texttemplate: "%{text}",
-                              showscale: true
+                              texttemplate: '%{z:.2f}',
+                              showscale: true,
                             }
-                          ]}
+                          ] as any[]}
                           layout={{
                             autosize: true,
                             height: 350,
@@ -1554,80 +1756,20 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-3 pt-2 border-t border-zinc-200">
+                      <h4 className="text-sm font-black uppercase tracking-widest text-zinc-700">Song Coverage by Platform</h4>
                       <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Hit Predictors (Top 25% Success)</h4>
+                        <h5 className="font-bold text-zinc-900 mb-6">Distribution of Songs by Platform Count</h5>
                         <Plot
                           data={[
                             {
-                              type: 'bar',
-                              orientation: 'h',
-                              y: ['Acousticness', 'Liveness', 'Valence', 'Energy', 'Danceability', 'Apple Playlists', 'Spotify Playlists'],
-                              x: [0.00, -0.03, -0.06, -0.02, -0.09, 0.61, 0.68],
-                              marker: { 
-                                color: ['#f43f5e', '#f43f5e', '#f43f5e', '#f43f5e', '#f43f5e', '#1DB954', '#1DB954'],
-                                opacity: 0.8
-                              },
-                              text: ['0.00', '-0.03', '-0.06', '-0.02', '-0.09', '+0.61', '+0.68'],
-                              textposition: 'outside',
-                            }
-                          ]}
-                          layout={{
-                            autosize: true,
-                            height: 400,
-                            margin: { l: 120, r: 40, t: 20, b: 40 },
-                            paper_bgcolor: 'rgba(0,0,0,0)',
-                            plot_bgcolor: 'rgba(0,0,0,0)',
-                            xaxis: { range: [-0.2, 0.6], gridcolor: '#e5e7eb' },
-                          }}
-                          config={{ responsive: true }}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Platform Synergy: Avg Streams vs Platforms</h4>
-                        <Plot
-                          data={[
-                            {
-                              type: 'bar',
-                              x: ['1 Platform', '2 Platforms', '3 Platforms', '4 Platforms'],
-                              y: [210000000, 450000000, 780000000, 1250000000],
-                              marker: { 
-                                color: ['#99f6e4', '#5eead4', '#2dd4bf', '#0d9488'],
-                              },
-                              text: ['210M', '450M', '780M', '1.25B'],
-                              textposition: 'outside',
-                            }
-                          ]}
-                          layout={{
-                            autosize: true,
-                            height: 400,
-                            margin: { l: 50, r: 30, t: 30, b: 50 },
-                            xaxis: { title: 'Number of Platforms' },
-                            yaxis: { title: 'Average Streams' },
-                            paper_bgcolor: 'rgba(0,0,0,0)',
-                            plot_bgcolor: 'rgba(0,0,0,0)',
-                          }}
-                          config={{ responsive: true }}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-8">
-                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Distribution of Songs by Platform Count</h4>
-                        <Plot
-                          data={[
-                            {
-                              type: 'bar',
-                              x: ['0 Platforms', '1 Platform', '2 Platforms', '3 Platforms', '4 Platforms'],
-                              y: [120, 450, 280, 150, 72],
+                              ...platformCountDistributionNonZero,
+                              x: platformCountDistributionNonZero.x.map((count: number) => `${count} Platform${count === 1 ? '' : 's'}`),
                               marker: { color: '#1DB954' },
-                              text: [120, 450, 280, 150, 72],
+                              text: platformCountDistributionNonZero.y,
                               textposition: 'outside',
                             }
-                          ]}
+                          ] as any[]}
                           layout={{
                             autosize: true,
                             height: 350,
@@ -1641,25 +1783,20 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           className="w-full"
                         />
                       </div>
-                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Platform Presence vs. Total Streams Correlation</h4>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-black uppercase tracking-widest text-zinc-700">Platform Presence vs Total Streams</h4>
+                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100"> 
+                        <h5 className="font-bold text-zinc-900 mb-6">Correlation Strength by Platform Metric</h5>
                         <Plot
-                          data={[
-                            {
-                              type: 'bar',
-                              x: ['Spotify Charts', 'Apple Charts', 'Deezer Charts', 'Shazam Charts'],
-                              y: [0.82, 0.55, 0.48, 0.32],
-                              marker: { color: '#1DB954' },
-                              text: ['0.82', '0.55', '0.48', '0.32'],
-                              textposition: 'outside',
-                            }
-                          ]}
+                          data={[platformStreamCorrelationTrace] as any[]}
                           layout={{
                             autosize: true,
                             height: 350,
-                            margin: { l: 50, r: 30, t: 30, b: 50 },
-                            xaxis: { title: 'Platform' },
-                            yaxis: { title: 'Correlation Coefficient', range: [0, 1] },
+                            margin: { l: 140, r: 30, t: 30, b: 50 },
+                            xaxis: { title: 'Correlation Coefficient', range: [-0.1, 0.85], gridcolor: '#e5e7eb' },
+                            yaxis: { title: 'Platform Metric' },
                             paper_bgcolor: 'rgba(0,0,0,0)',
                             plot_bgcolor: 'rgba(0,0,0,0)',
                           }}
@@ -1674,35 +1811,39 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <h5 className="font-bold text-zinc-900 mb-3">Strongest Relationships</h5>
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-zinc-600">Energy ↔ Valence</span>
+                            <span className="text-sm text-zinc-600">Spotify Charts ↔ Deezer Charts</span>
+                            <span className="font-mono font-bold text-[#1DB954]">+0.46</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-zinc-600">Spotify Charts ↔ Shazam Charts</span>
                             <span className="font-mono font-bold text-[#1DB954]">+0.40</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-zinc-600">Danceability ↔ Valence</span>
+                            <span className="text-sm text-zinc-600">Deezer Charts ↔ Shazam Charts</span>
                             <span className="font-mono font-bold text-[#1DB954]">+0.32</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-zinc-600">Energy ↔ Acousticness</span>
-                            <span className="font-mono font-bold text-rose-500">-0.28</span>
                           </div>
                         </div>
                       </div>
                       <div className="bg-zinc-900 p-6 rounded-2xl text-white shadow-xl">
                         <h5 className="font-bold text-[#1DB954] mb-2 flex items-center gap-2">
-                          <TrendingUp size={18} /> The "Hit" Predictor
+                          <TrendingUp size={18} /> Hit Predictor
                         </h5>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between border-b border-zinc-800 pb-1">
-                            <span className="text-xs text-zinc-400">Danceability ↔ Hit Status</span>
-                            <span className="font-mono font-bold text-[#1DB954]">+0.12</span>
+                            <span className="text-xs text-zinc-400">Spotify Playlists ↔ Hit Status</span>
+                            <span className="font-mono font-bold text-[#1DB954]">+0.68</span>
                           </div>
                           <div className="flex items-center justify-between border-b border-zinc-800 pb-1">
-                            <span className="text-xs text-zinc-400">Spotify Playlists ↔ Hit Status</span>
-                            <span className="font-mono font-bold text-[#1DB954]">+0.79</span>
+                            <span className="text-xs text-zinc-400">Apple Playlists ↔ Hit Status</span>
+                            <span className="font-mono font-bold text-[#1DB954]">+0.61</span>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-zinc-800 pb-1">
+                            <span className="text-xs text-zinc-400">Artist Count ↔ Hit Status</span>
+                            <span className="font-mono font-bold text-rose-400">-0.15</span>
                           </div>
                         </div>
                         <p className="text-xs text-zinc-500 mt-3 italic">
-                          * Hit Status defined as tracks in the top 25% of streams.
+                          * Hit status = tracks in the top quartile of streams.
                         </p>
                       </div>
                     </div>
@@ -1719,9 +1860,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={PieChart} 
               isOpen={sections.s6} 
               onToggle={() => toggleSection('s6')}
-              onViewCode={() => toggleCodePanel('artist_impact')}
             />
-            <CodePanel sectionKey="artist_impact" isOpen={codePanels['artist_impact']} />
             <AnimatePresence>
               {sections.s6 && (
                 <motion.div 
@@ -1731,30 +1870,16 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   className="overflow-hidden"
                 >
                   <div className="space-y-12">
-                    <div className="grid md:grid-cols-2 gap-12">
+                    <div className="space-y-6">
                       <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Top 10 Artists by Total Streams (Superstar Effect)</h4>
+                        <h4 className="font-bold text-zinc-900 mb-6">Top 10 Artists by Total Streams</h4>
                         <Plot
-                          data={[
-                            {
-                              type: 'bar',
-                              x: [14185, 14053, 13908, 11608, 9997, 7442, 6183, 5846, 5569, 5272],
-                              y: ['The Weeknd', 'Taylor Swift', 'Ed Sheeran', 'Harry Styles', 'Bad Bunny', 'Olivia Rodrigo', 'Eminem', 'Bruno Mars', 'Arctic Monkeys', 'Imagine Dragons'],
-                              orientation: 'h',
-                              marker: { 
-                                color: [14185, 14053, 13908, 11608, 9997, 7442, 6183, 5846, 5569, 5272],
-                                colorscale: 'Viridis',
-                                reversescale: true
-                              },
-                              text: ['2.9%', '2.9%', '2.8%', '2.4%', '2.0%', '1.5%', '1.3%', '1.2%', '1.1%', '1.1%'],
-                              textposition: 'outside',
-                            }
-                          ]}
+                          data={[topArtistsTrace] as any[]}
                           layout={{
                             autosize: true,
                             height: 500,
                             margin: { l: 120, r: 50, t: 30, b: 50 },
-                            xaxis: { title: 'Total Streams (Millions)' },
+                            xaxis: { title: 'Total Streams (Billions)', gridcolor: '#e5e7eb' },
                             yaxis: { autorange: 'reversed' },
                             paper_bgcolor: 'rgba(0,0,0,0)',
                             plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1763,42 +1888,19 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           className="w-full"
                         />
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <h4 className="font-bold text-zinc-900 mb-6">Top 10 Artist Market Share</h4>
-                        <div className="space-y-4">
-                          {[
-                            { name: 'The Weeknd', streams: '14.1B', pct: 2.90 },
-                            { name: 'Taylor Swift', streams: '14.0B', pct: 2.87 },
-                            { name: 'Ed Sheeran', streams: '13.9B', pct: 2.84 },
-                            { name: 'Harry Styles', streams: '11.6B', pct: 2.37 },
-                            { name: 'Bad Bunny', streams: '9.9B', pct: 2.04 },
-                            { name: 'Olivia Rodrigo', streams: '7.4B', pct: 1.52 },
-                            { name: 'Eminem', streams: '6.1B', pct: 1.26 },
-                            { name: 'Bruno Mars', streams: '5.8B', pct: 1.19 },
-                            { name: 'Arctic Monkeys', streams: '5.5B', pct: 1.14 },
-                            { name: 'Imagine Dragons', streams: '5.2B', pct: 1.08 },
-                          ].map((a, i) => (
-                            <div key={i} className="space-y-1">
-                              <div className="flex justify-between text-xs font-bold">
-                                <span>{a.name}</span>
-                                <span className="text-[#1DB954]">{a.streams} ({a.pct}%)</span>
-                              </div>
-                              <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                                <motion.div 
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${(a.pct / 2.9) * 100}%` }}
-                                  transition={{ delay: i * 0.05, duration: 1 }}
-                                  className="h-full bg-[#1DB954]"
-                                />
-                              </div>
+                      <div className="bg-zinc-900 p-6 rounded-2xl text-white">
+                        <p className="text-sm font-bold text-[#1DB954] mb-2">Superstar Effect</p>
+                        <p className="text-xs text-zinc-400 leading-relaxed">
+                          The Top 10 artists account for <strong>{top10ArtistsShare.toFixed(1)}%</strong> of total streams in the dataset.
+                          This concentration of success highlights the "Superstar Effect" where a small fraction of creators captures a disproportionate share of the market.
+                        </p>
+                        <div className="mt-4 grid md:grid-cols-3 gap-3 text-xs">
+                          {topArtistMarketShare.slice(0, 3).map((artist) => (
+                            <div key={artist.name} className="rounded-xl border border-zinc-700 bg-zinc-800/70 p-3">
+                              <div className="font-semibold text-zinc-100 truncate">{artist.name}</div>
+                              <div className="text-[#1DB954] font-mono mt-1">{artist.streams} ({artist.pct}%)</div>
                             </div>
                           ))}
-                        </div>
-                        <div className="mt-8 p-6 bg-zinc-900 rounded-2xl text-white">
-                          <p className="text-sm font-bold text-[#1DB954] mb-2">Superstar Effect Analysis</p>
-                          <p className="text-xs text-zinc-400 leading-relaxed">
-                            The Top 10 artists account for <strong>19.2%</strong> of total streams in the entire dataset. This concentration of success highlights the "Superstar Effect" where a small fraction of creators captures a disproportionate share of the market.
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -1809,12 +1911,11 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Plot
                           data={[
                             {
-                              type: 'histogram',
-                              x: artistSongCounts,
+                              ...songsPerArtistDistributionTrace,
                               marker: { color: '#6366f1' },
                               nbinsx: 20,
                             }
-                          ]}
+                          ] as any[]}
                           layout={{
                             autosize: true,
                             height: 350,
@@ -1828,30 +1929,123 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           className="w-full"
                         />
                         <p className="mt-4 text-xs text-zinc-500 italic">
-                          * Total unique artists: 644. Majority of artists have only one song in the top list.
+                          * Total unique artists: {UNIQUE_ARTIST_COUNT}. Majority of artists have only one song in the top list.
                         </p>
                       </div>
                       <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                        <h4 className="font-bold text-zinc-900 mb-6">Solo vs Collaboration (Avg Streams)</h4>
+                        <h4 className="font-bold text-zinc-900 mb-6">Collaboration Mix</h4>
+                        <div className="space-y-5">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm font-bold">
+                              <span>Solo tracks</span>
+                              <span className="text-[#1DB954]">{soloTracks} ({toPercent(soloTracks, CLEAN_TRACK_COUNT)})</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(soloTracks / CLEAN_TRACK_COUNT) * 100}%` }}
+                                transition={{ duration: 0.8 }}
+                                className="h-full bg-[#1DB954]"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm font-bold">
+                              <span>2-artist collabs</span>
+                              <span className="text-zinc-900">{duoTracks} ({toPercent(duoTracks, CLEAN_TRACK_COUNT)})</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(duoTracks / CLEAN_TRACK_COUNT) * 100}%` }}
+                                transition={{ duration: 0.8, delay: 0.05 }}
+                                className="h-full bg-zinc-900"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm font-bold">
+                              <span>3+ artist collabs</span>
+                              <span className="text-amber-600">{groupTracks} ({toPercent(groupTracks, CLEAN_TRACK_COUNT)})</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(groupTracks / CLEAN_TRACK_COUNT) * 100}%` }}
+                                transition={{ duration: 0.8, delay: 0.1 }}
+                                className="h-full bg-amber-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 leading-relaxed">
+                            Solo records dominate the dataset, while collaborations still represent a meaningful <strong className="text-zinc-900">{toPercent(collaborativeTracks, CLEAN_TRACK_COUNT)}</strong> of tracks. The structure is broad, but not collaboration-heavy enough to make multi-artist credits the default pattern.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-12">
+                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
+                        <h4 className="font-bold text-zinc-900 mb-6">Streams by Artist Count (Median & IQR)</h4>
+                        <Plot
+                          data={[
+                            {
+                              type: 'box',
+                              name: 'Streams',
+                              boxpoints: false,
+                              x: ARTIST_COUNT_STREAMS_SUMMARY.map((d) => `${d.artistCount} artist${d.artistCount > 1 ? 's' : ''}`),
+                              q1: ARTIST_COUNT_STREAMS_SUMMARY.map((d) => d.q1),
+                              median: ARTIST_COUNT_STREAMS_SUMMARY.map((d) => d.median),
+                              q3: ARTIST_COUNT_STREAMS_SUMMARY.map((d) => d.q3),
+                              marker: { color: '#1DB954' },
+                              line: { color: '#191414', width: 1.4 },
+                              customdata: ARTIST_COUNT_STREAMS_SUMMARY.map((d) => [d.n, d.q3 - d.q1]),
+                              hovertemplate:
+                                '<b>%{x}</b><br>Q1: %{q1:,}<br>Median: %{median:,}<br>Q3: %{q3:,}<br>IQR: %{customdata[1]:,.0f}<br>n: %{customdata[0]}<extra></extra>',
+                            },
+                          ] as any[]}
+                          layout={{
+                            autosize: true,
+                            height: 390,
+                            margin: { l: 64, r: 24, t: 20, b: 72 },
+                            yaxis: { title: 'Streams' },
+                            xaxis: { title: 'Artist Count', tickangle: -18 },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                          }}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
+                        <h4 className="font-bold text-zinc-900 mb-6">Mean Streams: Solo vs Collaboration</h4>
                         <Plot
                           data={[
                             {
                               type: 'bar',
-                              x: ['Solo (1)', 'Collab (>1)'],
-                              y: [568211662, 427559548],
-                              marker: { color: ['#1DB954', '#191414'] },
-                              text: ['568M', '428M'],
+                              x: SOLO_VS_COLLABORATION_MEAN_STREAMS.map((d) => d.group),
+                              y: SOLO_VS_COLLABORATION_MEAN_STREAMS.map((d) => d.meanStreams),
+                              marker: {
+                                color: SOLO_VS_COLLABORATION_MEAN_STREAMS.map((d) =>
+                                  d.group === 'Solo' ? '#1DB954' : '#191414'
+                                ),
+                              },
+                              text: SOLO_VS_COLLABORATION_MEAN_STREAMS.map(
+                                (d) => `${(d.meanStreams / 1_000_000).toFixed(1)}M`
+                              ),
                               textposition: 'outside',
-                            }
-                          ]}
+                              hovertemplate: '<b>%{x}</b><br>Mean streams: %{y:,}<extra></extra>',
+                            },
+                          ] as any[]}
                           layout={{
                             autosize: true,
-                            height: 350,
-                            margin: { l: 40, r: 20, t: 20, b: 40 },
+                            height: 390,
+                            margin: { l: 64, r: 24, t: 20, b: 64 },
+                            yaxis: { title: 'Mean Streams' },
+                            xaxis: { title: 'Song Type' },
                             paper_bgcolor: 'rgba(0,0,0,0)',
                             plot_bgcolor: 'rgba(0,0,0,0)',
                           }}
-                          config={{ responsive: true }}
                           className="w-full"
                         />
                       </div>
@@ -1869,9 +2063,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={LineChart} 
               isOpen={sections.s7} 
               onToggle={() => toggleSection('s7')}
-              onViewCode={() => toggleCodePanel('temporal_trends')}
             />
-            <CodePanel sectionKey="temporal_trends" isOpen={codePanels['temporal_trends']} />
             <AnimatePresence>
               {sections.s7 && (
                 <motion.div 
@@ -1883,83 +2075,9 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   <div className="space-y-16 py-8">
                     {/* 1. Music Features Trend */}
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                      <h4 className="font-bold text-zinc-900 mb-6">Music Features Trend Over Time (2000 - 2023)</h4>
+                      <h4 className="font-bold text-zinc-900 mb-3">Audio Feature Trends by Release Year (2000 - 2023)</h4>
                       <Plot
-                        data={[
-                          {
-                            name: 'danceability_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [63.5, 73.83333333333333, 42.5, 68.5, 63.0, 52.0, 64.0, 61.714285714285715, 60.7, 61.7, 57.0, 63.53846153846154, 53.72727272727273, 63.0, 63.52173913043478, 55.0, 60.72222222222222, 67.43243243243244, 68.18487394957984, 68.7139303482587, 70.02285714285715],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#636efa', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'energy_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [63.75, 69.16666666666667, 89.5, 69.0, 88.0, 85.0, 63.5, 73.28571428571429, 63.1, 62.8, 63.92307692307692, 65.46153846153847, 61.81818181818182, 63.166666666666664, 60.73913043478261, 50.9, 59.583333333333336, 66.43243243243244, 63.890756302521005, 63.582089552238806, 68.22285714285714],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#EF553B', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'valence_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [51.0, 41.166666666666664, 24.0, 46.75, 93.0, 20.0, 54.0, 45.42857142857143, 55.9, 49.3, 53.61538461538461, 47.53846153846154, 37.36363636363637, 45.44444444444444, 43.0, 36.2, 40.416666666666664, 51.027027027027025, 52.52100840336134, 51.49004975124378, 55.08],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#00cc96', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'acousticness_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [24.0, 18.166666666666668, 0.0, 16.0, 1.0, 0.0, 7.0, 13.714285714285714, 31.9, 32.7, 17.76923076923077, 29.076923076923077, 25.0, 26.055555555555557, 27.434782608695652, 41.1, 35.833333333333336, 22.972972972972972, 25.30252100840336, 27.422885572139304, 25.251428571428573],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#ab63fa', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'instrumentalness_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [1.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.15384615384615385, 3.230769230769231, 23.454545454545453, 1.8333333333333333, 2.0, 1.9, 4.472222222222222, 0.10810810810810811, 0.8067226890756303, 1.2860696517412935, 1.2057142857142857],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#FFA15A', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'liveness_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [16.25, 19.666666666666668, 37.0, 8.5, 12.0, 7.0, 18.0, 10.285714285714286, 12.5, 18.0, 17.615384615384617, 16.0, 18.272727272727273, 17.444444444444443, 14.043478260869565, 17.3, 16.444444444444443, 19.56756756756757, 16.857142857142858, 18.492537313432837, 19.742857142857144],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#19d3f3', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'speechiness_%',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [4.5, 16.666666666666668, 6.0, 15.25, 4.0, 5.0, 8.5, 7.428571428571429, 4.5, 7.4, 6.384615384615385, 7.538461538461538, 7.909090909090909, 8.333333333333334, 7.3478260869565215, 3.6, 8.666666666666666, 9.405405405405405, 11.504201680672269, 11.733830845771145, 9.297142857142857],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            line: { color: '#FF6692', width: 2 },
-                            marker: { size: 6 }
-                          },
-                          {
-                            name: 'bpm',
-                            x: [2000, 2002, 2003, 2004, 2005, 2007, 2008, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
-                            y: [114.75, 136.66666666666666, 129.0, 111.75, 93.0, 140.0, 113.0, 118.57142857142857, 127.9, 142.8, 120.07692307692308, 106.0, 127.36363636363636, 126.94444444444444, 119.0, 115.3, 118.36111111111111, 118.02702702702703, 125.83193277310924, 122.0049751243781, 124.06285714285714],
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            yaxis: 'y2',
-                            line: { color: '#B6E880', width: 2 },
-                            marker: { size: 6 }
-                          }
-                        ]}
+                        data={musicFeatureTrendTraces as any[]}
                         layout={{
                           autosize: true,
                           height: 500,
@@ -1981,6 +2099,9 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         config={{ responsive: true }}
                         className="w-full"
                       />
+                      <p className="mt-3 text-xs text-zinc-500">
+                        Note: Year refers to each song&apos;s release year in the dataset catalog, not only songs released in 2023.
+                      </p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-12">
@@ -1990,17 +2111,15 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Plot
                           data={[
                             {
-                              type: 'bar',
-                              x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                              y: [110, 60, 84, 66, 127, 86, 60, 46, 52, 69, 71, 73],
+                              ...seasonalityTrace,
                               marker: { 
-                                color: [110, 60, 84, 66, 127, 86, 60, 46, 52, 69, 71, 73],
+                                color: seasonalityTrace.y,
                                 colorscale: 'Viridis'
                               },
-                              text: [110, 60, 84, 66, 127, 86, 60, 46, 52, 69, 71, 73],
+                              text: seasonalityTrace.y,
                               textposition: 'outside',
                             }
-                          ]}
+                          ] as any[]}
                           layout={{
                             autosize: true,
                             height: 400,
@@ -2021,10 +2140,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         <Plot
                           data={[
                             {
-                              type: 'scatter',
-                              mode: 'lines+markers',
-                              x: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                              y: [60, 65, 87, 154, 526, 23, 37],
+                              ...fridayPhenomenonTrace,
                               line: { color: '#1DB954', width: 4 },
                               marker: { size: 10, color: '#191414' },
                               fill: 'tozeroy',
@@ -2063,9 +2179,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={BarChart3} 
               isOpen={sections.s8} 
               onToggle={() => toggleSection('s8')}
-              onViewCode={() => toggleCodePanel('success_factors')}
             />
-            <CodePanel sectionKey="success_factors" isOpen={codePanels['success_factors']} />
             <AnimatePresence>
               {sections.s8 && (
                 <motion.div 
@@ -2077,30 +2191,15 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                   <div className="space-y-12 py-8">
                     {/* 1. The "Gatekeeper" Effect */}
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                      <h4 className="font-bold text-zinc-900 mb-8 text-center uppercase tracking-wider text-sm">The "Gatekeeper" Effect: Streams vs Spotify Playlists</h4>
+                      <h4 className="font-bold text-zinc-900 mb-8 text-center uppercase tracking-wider text-sm">The "Gatekeeper" Effect: Playlist Reach vs Streams</h4>
                       <Plot
-                        data={[
-                          {
-                            type: 'scatter',
-                            mode: 'markers',
-                            x: [52898, 51979, 50887, 49991, 49341, 43257, 42125, 41258, 39874, 38541, 25000, 15000, 10000, 5000, 1000],
-                            y: [2500000000, 2300000000, 2100000000, 2000000000, 1900000000, 2710000000, 3560000000, 3700000000, 2880000000, 2860000000, 1500000000, 1000000000, 600000000, 300000000, 100000000],
-                            marker: {
-                              size: 12,
-                              color: '#1DB954',
-                              opacity: 0.6,
-                              line: { color: 'white', width: 1 }
-                            },
-                            text: ['Get Lucky', 'Mr. Brightside', 'Wake Me Up', 'Smells Like Teen Spirit', 'Take Me To Church', 'One Dance', 'Shape of You', 'Blinding Lights', 'Someone You Loved', 'Dance Monkey'],
-                            hovertemplate: '<b>%{text}</b><br>Playlists: %{x}<br>Streams: %{y:,.0f}<extra></extra>'
-                          }
-                        ]}
+                        data={[platformStreamCorrelationTrace] as any[]}
                         layout={{
                           autosize: true,
                           height: 450,
-                          margin: { l: 80, r: 40, t: 40, b: 60 },
-                          xaxis: { title: 'In Spotify Playlists', gridcolor: '#e5e7eb' },
-                          yaxis: { title: 'Total Streams', gridcolor: '#e5e7eb' },
+                          margin: { l: 160, r: 40, t: 40, b: 60 },
+                          xaxis: { title: 'Correlation with Streams', range: [-0.1, 0.85], gridcolor: '#e5e7eb' },
+                          yaxis: { title: 'Platform Metric', gridcolor: '#e5e7eb' },
                           paper_bgcolor: 'rgba(0,0,0,0)',
                           plot_bgcolor: 'rgba(0,0,0,0)',
                         }}
@@ -2110,7 +2209,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                       <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm border border-zinc-100">
                         <h5 className="font-bold text-zinc-900 mb-2">The "Winning" Formula</h5>
                         <p className="text-sm text-zinc-600 leading-relaxed">
-                          To become a Mega Hit in 2023, <strong>Playlist Presence</strong> is 5x more important than any specific audio feature. However, among audio features, <strong>Danceability</strong> and <strong>Energy</strong> provide a small but statistically significant positive boost.
+                          Playlist reach is the dominant success signal: <strong>Spotify playlists (0.79)</strong>, <strong>Apple playlists (0.77)</strong>,= and <strong>Deezer playlists (0.60)</strong> all correlate far more strongly with streams than chart counts. Shazam presence is nearly neutral, so discovery alone is not enough without sustained playlist support.
                         </p>
                       </div>
                     </div>
@@ -2127,9 +2226,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Music} 
               isOpen={sections.s9} 
               onToggle={() => toggleSection('s9')}
-              onViewCode={() => toggleCodePanel('audio_profiles')}
             />
-            <CodePanel sectionKey="audio_profiles" isOpen={codePanels['audio_profiles']} />
             <AnimatePresence>
               {sections.s9 && (
                 <motion.div 
@@ -2143,22 +2240,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
                       <h4 className="font-bold text-zinc-900 mb-8 text-center uppercase tracking-wider text-sm">The Sonic Mood of 2023: Energy vs. Valence</h4>
                       <Plot
-                        data={[
-                          {
-                            type: 'scatter',
-                            mode: 'markers',
-                            x: [50, 93, 41, 59, 68, 54, 35, 75, 45, 80, 20, 10, 85, 30, 60, 40],
-                            y: [76, 82, 50, 73, 80, 65, 40, 88, 55, 90, 30, 20, 85, 45, 70, 50],
-                            marker: {
-                              size: [30, 25, 20, 28, 22, 24, 18, 26, 20, 22, 15, 12, 28, 18, 24, 20],
-                              color: ['#1DB954', '#1DB954', '#f43f5e', '#1DB954', '#1DB954', '#1DB954', '#f43f5e', '#1DB954', '#f43f5e', '#1DB954', '#f43f5e', '#f43f5e', '#1DB954', '#f43f5e', '#1DB954', '#f43f5e'],
-                              opacity: 0.7,
-                              line: { color: 'white', width: 1 }
-                            },
-                            text: ['Blinding Lights', 'Shape of You', 'Someone You Loved', 'Dance Monkey', 'STAY', 'As It Was', 'Kill Bill', 'Flowers', 'Anti-Hero', 'Cruel Summer', 'Glimpse of Us', 'Ghost', 'I\'m Good', 'Vampire', 'Seven', 'Creepin\''],
-                            hovertemplate: '<b>%{text}</b><br>Valence: %{x}<br>Energy: %{y}<extra></extra>'
-                          }
-                        ]}
+                        data={sonicMoodTraces as any[]}
                         layout={{
                           autosize: true,
                           height: 500,
@@ -2168,12 +2250,12 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           paper_bgcolor: 'rgba(0,0,0,0)',
                           plot_bgcolor: 'rgba(0,0,0,0)',
                           shapes: [
-                            { type: 'line', x0: 51.4, x1: 51.4, y0: 0, y1: 100, line: { color: 'gray', dash: 'dash', width: 1 } },
-                            { type: 'line', x0: 0, x1: 100, y0: 64.2, y1: 64.2, line: { color: 'gray', dash: 'dash', width: 1 } }
+                            { type: 'line', x0: 51.41, x1: 51.41, y0: 0, y1: 100, line: { color: 'gray', dash: 'dash', width: 1 } },
+                            { type: 'line', x0: 0, x1: 100, y0: 64.27, y1: 64.27, line: { color: 'gray', dash: 'dash', width: 1 } }
                           ],
                           annotations: [
-                            { x: 51.4, y: 100, text: 'Avg Valence', showarrow: false, yanchor: 'bottom', font: { size: 10 } },
-                            { x: 100, y: 64.2, text: 'Avg Energy', showarrow: false, xanchor: 'left', font: { size: 10 } }
+                            { x: 51.41, y: 100, text: 'Avg Valence', showarrow: false, yanchor: 'bottom', font: { size: 10 } },
+                            { x: 100, y: 64.27, text: 'Avg Energy', showarrow: false, xanchor: 'left', font: { size: 10 } }
                           ]
                         }}
                         config={{ responsive: true }}
@@ -2183,34 +2265,24 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
 
                     {/* 2. Audio Profile Radar Chart */}
                     <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100">
-                      <h4 className="font-bold text-zinc-900 mb-8 text-center uppercase tracking-wider text-sm">Audio Profile Comparison: Mega Hits vs Normal Hits</h4>
+                      <h4 className="font-bold text-zinc-900 mb-2 text-center uppercase tracking-wider text-sm">Audio Profile Comparison: Mega Hits vs Normal Hits</h4>
+                      <p className="mb-4 text-center text-xs text-zinc-500">
+                        Note: Each spoke represents one audio feature (% scale). Farther from the center means a higher average value.
+                      </p>
                       <Plot
-                        data={[
-                          {
-                            type: 'scatterpolar',
-                            r: [68, 52, 72, 18, 16, 68],
-                            theta: ['Danceability', 'Valence', 'Energy', 'Acousticness', 'Liveness', 'Danceability'],
-                            fill: 'toself',
-                            name: 'Mega Hit (Top 25%)',
-                            line: { color: '#1DB954' },
-                            fillcolor: 'rgba(29, 185, 84, 0.3)'
-                          },
-                          {
-                            type: 'scatterpolar',
-                            r: [64, 48, 68, 22, 18, 64],
-                            theta: ['Danceability', 'Valence', 'Energy', 'Acousticness', 'Liveness', 'Danceability'],
-                            fill: 'toself',
-                            name: 'Normal Hit',
-                            line: { color: '#191414' },
-                            fillcolor: 'rgba(25, 20, 20, 0.3)'
-                          }
-                        ]}
+                        data={audioProfileTraces as any[]}
                         layout={{
                           autosize: true,
                           height: 500,
                           margin: { l: 80, r: 80, t: 40, b: 40 },
                           polar: {
-                            radialaxis: { visible: true, range: [0, 80], gridcolor: '#e5e7eb' },
+                            radialaxis: {
+                              visible: true,
+                              range: [0, 80],
+                              gridcolor: '#e5e7eb',
+                              showticklabels: false,
+                              ticks: '',
+                            },
                             angularaxis: { gridcolor: '#e5e7eb' }
                           },
                           paper_bgcolor: 'rgba(0,0,0,0)',
@@ -2235,8 +2307,6 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
               icon={Clipboard} 
               isOpen={sections.summary} 
               onToggle={() => toggleSection('summary')}
-              onViewCode={() => {}} 
-              showCodeButton={false}
             />
             <AnimatePresence>
               {sections.summary && (
@@ -2297,7 +2367,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                            </li>
                            <li className="flex items-start gap-2">
                               <span className="text-[#1DB954] mt-1 text-xs shrink-0">►</span>
-                              <span><strong className="text-zinc-950">Popularity Metrics:</strong> <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_deezer_playlists</code>, <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_spotify_playlists</code>, and <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_shazam_charts</code> show a strong right-skew, typical for popularity metrics where a few 'super hits' possess extremely high values.</span>
+                              <span><strong className="text-zinc-950">Popularity Metrics:</strong> <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_deezer_playlists</code>, <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_spotify_playlists</code> and <code className="bg-zinc-100 text-[#1DB954] px-1.5 py-0.5 rounded text-xs font-mono">in_shazam_charts</code> show a strong right-skew, typical for popularity metrics where a few 'super hits' possess extremely high values.</span>
                            </li>
                            <li className="flex items-start gap-2">
                               <span className="text-[#1DB954] mt-1 text-xs shrink-0">►</span>
@@ -2338,11 +2408,11 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                           </div>
                           <div className="bg-zinc-900 p-6 rounded-2xl border-l-4 border-[#1DB954] shadow-inner">
                             <h4 className="text-lg font-black text-[#1DB954] mb-2">2. Sonic Mood</h4>
-                            <p className="text-sm text-zinc-100 leading-relaxed">2023 hits lean high-energy and danceable. Acousticness is at an all-time low for top-charting tracks. The "Major" key remains the dominant mode for success.</p>
+                            <p className="text-sm text-zinc-100 leading-relaxed">Mega Hits and normal hits share very similar audio profiles. Major mode still dominates, but distribution support matters more than any radical sonic difference.</p>
                           </div>
                           <div className="bg-zinc-900 p-6 rounded-2xl border-l-4 text-[#1DB954] shadow-inner">
                             <h4 className="text-lg font-black text-[#1DB954] mb-2">3. Superstar Effect</h4>
-                            <p className="text-sm text-zinc-100 leading-relaxed">A classic power-law distribution: Top 10 artists account for 19.2% of streams. Solo tracks surprisingly outperform collaborations in average stream volume.</p>
+                            <p className="text-sm text-zinc-100 leading-relaxed">A classic power-law distribution: the top 10 artists account for {top10ArtistsShare.toFixed(1)}% of streams. Collaborations are common, but solo tracks still dominate the chart population.</p>
                           </div>
                           <div className="bg-zinc-900 p-6 rounded-2xl border-l-4 text-[#1DB954] shadow-inner">
                             <h4 className="text-lg font-black text-[#1DB954] mb-2">4. Friday Dominance</h4>
@@ -2351,7 +2421,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
                         </div>
                         <div className="mt-8 border-t border-[#1DB954]/40 pt-6 text-center">
                           <p className="text-[#7efc8f] italic font-bold text-lg">
-                            "Achieving Mega Hit status is a sophisticated interplay of strategic playlisting, energetic production, and optimized release timing."
+                            "Achieving Mega Hit status is a sophisticated interplay of strategic playlisting, energetic production and optimized release timing"
                           </p>
                         </div>
                       </div>
@@ -2370,7 +2440,7 @@ export default function SpotifyEDA({ onBack }: { onBack: () => void }) {
             <BarChart3 size={20} />
           </div>
           <p className="font-bold text-zinc-900 mb-1">Spotify Top Songs 2023 — EDA Report</p>
-          <p>Built with React, Plotly.js, and Tailwind CSS</p>
+          <p>Built with React, Plotly.js and Tailwind CSS</p>
           <p className="mt-4 text-[10px] uppercase tracking-widest opacity-50">© 2026 Data Science Insights</p>
         </footer>
       </div>

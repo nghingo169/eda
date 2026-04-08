@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Home from './Home';
-import SpotifyEDA from './pages/1_spotify/SpotifyEDA';
-import Hate from './pages/2_hate/Hate';
+
+const SpotifyEDA = lazy(() => import('./pages/1_spotify/SpotifyEDA'));
+const Hate = lazy(() => import('./pages/2_hate/Hate'));
 
 type View = 'home' | 'spotify' | 'hate';
+
+function PageLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-black text-sm font-semibold tracking-wide text-slate-400">
+      Loading…
+    </div>
+  );
+}
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('home');
@@ -24,7 +33,6 @@ export default function App() {
             <Home onSelect={setCurrentView} />
           </motion.div>
         )}
-
         {currentView === 'spotify' && (
           <motion.div
             key="spotify"
@@ -33,10 +41,11 @@ export default function App() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <SpotifyEDA onBack={() => setCurrentView('home')} />
+            <Suspense fallback={<PageLoader />}>
+              <SpotifyEDA onBack={() => setCurrentView('home')} />
+            </Suspense>
           </motion.div>
         )}
-
         {currentView === 'hate' && (
           <motion.div
             key="hate"
@@ -45,7 +54,9 @@ export default function App() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <Hate onBack={() => setCurrentView('home')} />
+            <Suspense fallback={<PageLoader />}>
+              <Hate onBack={() => setCurrentView('home')} />
+            </Suspense>
           </motion.div>
         )}
       </AnimatePresence>
