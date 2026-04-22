@@ -91,7 +91,7 @@ export default function Home({ onSelect }: HomeProps) {
             whileHover={{ y: -8 }}
             className="group relative p-8 rounded-3xl border border-white/5 bg-zinc-900/30 backdrop-blur-2xl transition-all hover:border-emerald-500/30 text-left overflow-hidden cursor-pointer"
             onMouseEnter={() => {
-              void import('./pages/1_spotify/SpotifyEDA');
+              void import('./pages/1_spotify/SpotifyHub');
             }}
             onClick={() => onSelect('spotify')}
           >

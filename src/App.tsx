@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Home from './Home';
 
-const SpotifyEDA = lazy(() => import('./pages/1_spotify/SpotifyEDA'));
+const Spotify = lazy(() => import('./pages/1_spotify/SpotifyHub'));
 const Hate = lazy(() => import('./pages/2_hate/Hate'));
 
 type View = 'home' | 'spotify' | 'hate';
@@ -17,8 +17,7 @@ function PageLoader() {
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('home');
-  {currentView === 'hate' && <Hate onBack={() => setCurrentView('home')} />}
-  {currentView === 'spotify' && <SpotifyEDA onBack={() => setCurrentView('home')} />}
+
   return (
     <div className="min-h-screen bg-black">
       <AnimatePresence mode="wait">
@@ -33,6 +32,7 @@ export default function App() {
             <Home onSelect={setCurrentView} />
           </motion.div>
         )}
+
         {currentView === 'spotify' && (
           <motion.div
             key="spotify"
@@ -42,10 +42,11 @@ export default function App() {
             transition={{ duration: 0.4 }}
           >
             <Suspense fallback={<PageLoader />}>
-              <SpotifyEDA onBack={() => setCurrentView('home')} />
+              <Spotify onBack={() => setCurrentView('home')} />
             </Suspense>
           </motion.div>
         )}
+
         {currentView === 'hate' && (
           <motion.div
             key="hate"
