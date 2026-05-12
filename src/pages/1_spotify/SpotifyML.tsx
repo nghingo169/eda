@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import testMultiMetricComparisonJson from './eda_json/test_multi_metric_comparison.json';
+import cvRocAucComparisonJson from './eda_json/model_comparison_cv_roc_auc.json';
+import randomForestConfusionJson from './eda_json/confusion_matrix_random_forest.json';
 import Plot from 'react-plotly.js';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -87,18 +90,24 @@ const MODEL_COLOR_MAP: Record<string, string> = {
   MLP: '#F43F5E',
 };
 
-const MODEL_RESULTS: ModelResult[] = [
+const TEST_MULTI_METRIC_FIGURE = testMultiMetricComparisonJson as PlotFigure;
+const CV_ROC_AUC_FIGURE = cvRocAucComparisonJson as PlotFigure;
+const RANDOM_FOREST_CONFUSION_FIGURE = randomForestConfusionJson as PlotFigure;
+
+// Static metadata stays in React because it is presentation text, not model output.
+// Numeric metrics are extracted from the Plotly JSON files exported by the notebook.
+type ModelStaticInfo = Pick<
+  ModelResult,
+  'id' | 'name' | 'family' | 'cvF1' | 'speed' | 'interpretability' | 'strengths' | 'weaknesses' | 'note'
+> &
+  Partial<Pick<ModelResult, 'cvRocAuc' | 'testAccuracy' | 'testPrecision' | 'testRecall' | 'testF1' | 'testRocAuc'>>;
+
+const MODEL_STATIC_INFO: ModelStaticInfo[] = [
   {
     id: 'rf',
     name: 'Random Forest',
     family: 'Ensemble Trees',
-    cvRocAuc: 1.0,
     cvF1: 1.0,
-    testAccuracy: 0.9895,
-    testPrecision: 1.0,
-    testRecall: 0.96,
-    testF1: 0.9787,
-    testRocAuc: 0.9997,
     speed: 'Medium',
     interpretability: 'Medium',
     strengths: [
@@ -106,23 +115,14 @@ const MODEL_RESULTS: ModelResult[] = [
       'Excellent balance between recall and precision',
       'Robust on mixed feature types after preprocessing',
     ],
-    weaknesses: [
-      'Less interpretable than linear models',
-      'Heavier than simple baselines',
-    ],
+    weaknesses: ['Less interpretable than linear models', 'Heavier than simple baselines'],
     note: 'Chosen as the best model in the notebook because it achieved nearly perfect ROC AUC and the strongest overall held-out performance.',
   },
   {
     id: 'dt',
     name: 'Decision Tree',
     family: 'Tree-Based',
-    cvRocAuc: 1.0,
     cvF1: 1.0,
-    testAccuracy: 0.9895,
-    testPrecision: 0.98,
-    testRecall: 1.0,
-    testF1: 0.99,
-    testRocAuc: 1.0,
     speed: 'Fast',
     interpretability: 'High',
     strengths: ['Easy to explain', 'Perfect recall on the test split', 'Very strong tree-based baseline'],
@@ -133,13 +133,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'ada',
     name: 'AdaBoost',
     family: 'Boosting',
-    cvRocAuc: 1.0,
     cvF1: 1.0,
-    testAccuracy: 0.9895,
-    testPrecision: 0.98,
-    testRecall: 1.0,
-    testF1: 0.99,
-    testRocAuc: 1.0,
     speed: 'Medium',
     interpretability: 'Medium',
     strengths: ['Strong classification boundary', 'Perfect recall on test split'],
@@ -150,13 +144,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'gb',
     name: 'Gradient Boosting',
     family: 'Boosting',
-    cvRocAuc: 1.0,
     cvF1: 1.0,
-    testAccuracy: 0.9895,
-    testPrecision: 0.98,
-    testRecall: 1.0,
-    testF1: 0.99,
-    testRocAuc: 1.0,
     speed: 'Slow',
     interpretability: 'Low',
     strengths: ['Very strong predictive power', 'Excellent across all evaluation metrics'],
@@ -167,13 +155,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'lr',
     name: 'LogisticRegression',
     family: 'Linear Model',
-    cvRocAuc: 1.0,
     cvF1: 0.94,
-    testAccuracy: 0.96,
-    testPrecision: 0.95,
-    testRecall: 0.88,
-    testF1: 0.91,
-    testRocAuc: 0.99,
     speed: 'Fast',
     interpretability: 'High',
     strengths: ['Simple and explainable', 'Excellent linear baseline', 'Very competitive ROC AUC'],
@@ -184,13 +166,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'et',
     name: 'Extra Trees',
     family: 'Ensemble Trees',
-    cvRocAuc: 0.99,
     cvF1: 0.91,
-    testAccuracy: 0.94,
-    testPrecision: 0.95,
-    testRecall: 0.79,
-    testF1: 0.86,
-    testRocAuc: 0.99,
     speed: 'Medium',
     interpretability: 'Medium',
     strengths: ['Strong ranking quality', 'Good precision'],
@@ -201,13 +177,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'mlp',
     name: 'MLP',
     family: 'Neural Network',
-    cvRocAuc: 0.99,
     cvF1: 0.94,
-    testAccuracy: 0.94,
-    testPrecision: 0.93,
-    testRecall: 0.81,
-    testF1: 0.87,
-    testRocAuc: 0.98,
     speed: 'Slow',
     interpretability: 'Low',
     strengths: ['Learns nonlinear interactions', 'Good all-round performance'],
@@ -218,13 +188,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'svm',
     name: 'SVM (RBF)',
     family: 'Kernel Method',
-    cvRocAuc: 0.99,
     cvF1: 0.91,
-    testAccuracy: 0.93,
-    testPrecision: 0.9,
-    testRecall: 0.79,
-    testF1: 0.84,
-    testRocAuc: 0.98,
     speed: 'Medium',
     interpretability: 'Low',
     strengths: ['Strong decision boundary', 'Good ROC AUC'],
@@ -235,13 +199,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'knn',
     name: 'KNN',
     family: 'Instance-Based',
-    cvRocAuc: 0.96,
     cvF1: 0.77,
-    testAccuracy: 0.89,
-    testPrecision: 0.97,
-    testRecall: 0.58,
-    testF1: 0.73,
-    testRocAuc: 0.93,
     speed: 'Fast',
     interpretability: 'Medium',
     strengths: ['Very high precision', 'Conceptually simple'],
@@ -252,13 +210,7 @@ const MODEL_RESULTS: ModelResult[] = [
     id: 'dummy',
     name: 'Dummy Baseline',
     family: 'Baseline',
-    cvRocAuc: 0.5,
     cvF1: 0.0,
-    testAccuracy: 0.75,
-    testPrecision: 0.0,
-    testRecall: 0.0,
-    testF1: 0.0,
-    testRocAuc: 0.5,
     speed: 'Very Fast',
     interpretability: 'High',
     strengths: ['Fast sanity check'],
@@ -267,12 +219,132 @@ const MODEL_RESULTS: ModelResult[] = [
   },
 ];
 
-const BEST_MODEL_CONFUSION: BinaryConfusion = {
-  tn: 143,
-  fp: 0,
-  fn: 2,
-  tp: 46,
+const FALLBACK_METRICS: Record<string, Pick<ModelResult, 'cvRocAuc' | 'testAccuracy' | 'testPrecision' | 'testRecall' | 'testF1' | 'testRocAuc'>> = {
+  'Random Forest': { cvRocAuc: 1.0, testAccuracy: 0.9895, testPrecision: 1.0, testRecall: 0.96, testF1: 0.9787, testRocAuc: 0.9997 },
+  'Decision Tree': { cvRocAuc: 1.0, testAccuracy: 0.9895, testPrecision: 0.98, testRecall: 1.0, testF1: 0.99, testRocAuc: 1.0 },
+  AdaBoost: { cvRocAuc: 1.0, testAccuracy: 0.9895, testPrecision: 0.98, testRecall: 1.0, testF1: 0.99, testRocAuc: 1.0 },
+  'Gradient Boosting': { cvRocAuc: 1.0, testAccuracy: 0.9895, testPrecision: 0.98, testRecall: 1.0, testF1: 0.99, testRocAuc: 1.0 },
+  LogisticRegression: { cvRocAuc: 1.0, testAccuracy: 0.96, testPrecision: 0.95, testRecall: 0.88, testF1: 0.91, testRocAuc: 0.99 },
+  'Extra Trees': { cvRocAuc: 0.99, testAccuracy: 0.94, testPrecision: 0.95, testRecall: 0.79, testF1: 0.86, testRocAuc: 0.99 },
+  MLP: { cvRocAuc: 0.99, testAccuracy: 0.94, testPrecision: 0.93, testRecall: 0.81, testF1: 0.87, testRocAuc: 0.98 },
+  'SVM (RBF)': { cvRocAuc: 0.99, testAccuracy: 0.93, testPrecision: 0.9, testRecall: 0.79, testF1: 0.84, testRocAuc: 0.98 },
+  KNN: { cvRocAuc: 0.96, testAccuracy: 0.89, testPrecision: 0.97, testRecall: 0.58, testF1: 0.73, testRocAuc: 0.93 },
+  'Dummy Baseline': { cvRocAuc: 0.5, testAccuracy: 0.75, testPrecision: 0.0, testRecall: 0.0, testF1: 0.0, testRocAuc: 0.5 },
 };
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+function asNumberArray(value: unknown): number[] {
+  return Array.isArray(value) ? value.map((item) => Number(item)).filter((item) => Number.isFinite(item)) : [];
+}
+
+function extractCvRocAucByModel(figure: PlotFigure): Record<string, number> {
+  const output: Record<string, number> = {};
+
+  figure.data.forEach((rawTrace) => {
+    const trace = asRecord(rawTrace);
+    const traceName = typeof trace.name === 'string' ? trace.name : undefined;
+    const scores = asNumberArray(trace.x);
+    const models = asStringArray(trace.y);
+
+    if (traceName && scores.length === 1) {
+      output[traceName] = scores[0];
+      return;
+    }
+
+    models.forEach((model, index) => {
+      if (scores[index] !== undefined) output[model] = scores[index];
+    });
+  });
+
+  return output;
+}
+
+function extractTestMetricsByModel(figure: PlotFigure): Record<string, Partial<ModelResult>> {
+  const metricKeyMap: Record<string, keyof Pick<ModelResult, 'testAccuracy' | 'testPrecision' | 'testRecall' | 'testF1' | 'testRocAuc'>> = {
+    'Test Accuracy': 'testAccuracy',
+    Accuracy: 'testAccuracy',
+    'Test Precision': 'testPrecision',
+    Precision: 'testPrecision',
+    'Test Recall': 'testRecall',
+    Recall: 'testRecall',
+    'Test F1': 'testF1',
+    F1: 'testF1',
+    'F1 Score': 'testF1',
+    'Test ROC AUC': 'testRocAuc',
+    'ROC AUC': 'testRocAuc',
+  };
+
+  const output: Record<string, Partial<ModelResult>> = {};
+
+  figure.data.forEach((rawTrace) => {
+    const trace = asRecord(rawTrace);
+    const metricName = typeof trace.name === 'string' ? trace.name : '';
+    const key = metricKeyMap[metricName];
+    if (!key) return;
+
+    const scores = asNumberArray(trace.x);
+    const models = asStringArray(trace.y);
+
+    models.forEach((model, index) => {
+      output[model] = output[model] ?? {};
+      const score = scores[index];
+      if (score !== undefined) output[model][key] = score;
+    });
+  });
+
+  return output;
+}
+
+function extractConfusionMatrix(figure: PlotFigure): BinaryConfusion {
+  const firstTrace = asRecord(figure.data[0]);
+  const z = firstTrace.z;
+
+  if (Array.isArray(z) && Array.isArray(z[0]) && Array.isArray(z[1])) {
+    const firstRow = z[0] as unknown[];
+    const secondRow = z[1] as unknown[];
+    return {
+      tn: Number(firstRow[0]) || 0,
+      fp: Number(firstRow[1]) || 0,
+      fn: Number(secondRow[0]) || 0,
+      tp: Number(secondRow[1]) || 0,
+    };
+  }
+
+  return { tn: 143, fp: 0, fn: 2, tp: 46 };
+}
+
+function buildModelResults(): ModelResult[] {
+  const cvRocAucByModel = extractCvRocAucByModel(CV_ROC_AUC_FIGURE);
+  const testMetricsByModel = extractTestMetricsByModel(TEST_MULTI_METRIC_FIGURE);
+
+  return MODEL_STATIC_INFO.map((info) => {
+    const fallback = FALLBACK_METRICS[info.name];
+    const extractedTest = testMetricsByModel[info.name] ?? {};
+
+    return {
+      ...info,
+      cvRocAuc: cvRocAucByModel[info.name] ?? info.cvRocAuc ?? fallback.cvRocAuc,
+      testAccuracy: extractedTest.testAccuracy ?? info.testAccuracy ?? fallback.testAccuracy,
+      testPrecision: extractedTest.testPrecision ?? info.testPrecision ?? fallback.testPrecision,
+      testRecall: extractedTest.testRecall ?? info.testRecall ?? fallback.testRecall,
+      testF1: extractedTest.testF1 ?? info.testF1 ?? fallback.testF1,
+      testRocAuc: extractedTest.testRocAuc ?? info.testRocAuc ?? fallback.testRocAuc,
+    };
+  });
+}
+
+const MODEL_RESULTS: ModelResult[] = buildModelResults();
+const BEST_MODEL_ID = 'rf';
+const BEST_MODEL = MODEL_RESULTS.find((model) => model.id === BEST_MODEL_ID) ?? MODEL_RESULTS[0];
+
+const BEST_MODEL_CONFUSION: BinaryConfusion = extractConfusionMatrix(RANDOM_FOREST_CONFUSION_FIGURE);
 
 const TOTAL_SAMPLES = 952;
 const TRAIN_SAMPLES = 761;
@@ -415,9 +487,9 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
     conclusion: true,
   });
 
-  const [selectedModelId, setSelectedModelId] = useState<string>('rf');
+  const [selectedModelId, setSelectedModelId] = useState<string>(BEST_MODEL_ID);
 
-  const selectedModel = MODEL_RESULTS.find((m) => m.id === selectedModelId) ?? MODEL_RESULTS[0];
+  const selectedModel = MODEL_RESULTS.find((m) => m.id === selectedModelId) ?? BEST_MODEL;
 
   const toggleSection = (key: keyof typeof sections) => {
     setSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -498,76 +570,9 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
     };
   }, []);
 
-  const multiMetricFigure = useMemo<PlotFigure>(() => {
-    return {
-      data: [
-        {
-          type: 'bar',
-          name: 'Accuracy',
-          x: MODEL_RESULTS.map((m) => m.name),
-          y: MODEL_RESULTS.map((m) => m.testAccuracy),
-          marker: { color: COLORS.green },
-        },
-        {
-          type: 'bar',
-          name: 'Precision',
-          x: MODEL_RESULTS.map((m) => m.name),
-          y: MODEL_RESULTS.map((m) => m.testPrecision),
-          marker: { color: COLORS.blue },
-        },
-        {
-          type: 'bar',
-          name: 'Recall',
-          x: MODEL_RESULTS.map((m) => m.name),
-          y: MODEL_RESULTS.map((m) => m.testRecall),
-          marker: { color: COLORS.pink },
-        },
-        {
-          type: 'bar',
-          name: 'ROC AUC',
-          x: MODEL_RESULTS.map((m) => m.name),
-          y: MODEL_RESULTS.map((m) => m.testRocAuc),
-          marker: { color: COLORS.orange },
-        },
-      ],
-      layout: {
-        title: 'Held-Out Test Metrics Across Models',
-        height: 580,
-        barmode: 'group',
-        xaxis: { title: 'Model', tickangle: -25 },
-        yaxis: { title: 'Score', range: [0, 1.05] },
-        legend: { orientation: 'h', y: -0.2 },
-      },
-    };
-  }, []);
+  const multiMetricFigure = useMemo<PlotFigure>(() => TEST_MULTI_METRIC_FIGURE, []);
 
-  const bestModelConfusionFigure = useMemo<PlotFigure>(() => {
-    return {
-      data: [
-        {
-          type: 'heatmap',
-          z: [
-            [BEST_MODEL_CONFUSION.tn, BEST_MODEL_CONFUSION.fp],
-            [BEST_MODEL_CONFUSION.fn, BEST_MODEL_CONFUSION.tp],
-          ],
-          x: ['Predicted: Not Hit', 'Predicted: Hit'],
-          y: ['Actual: Not Hit', 'Actual: Hit'],
-          text: [
-            [String(BEST_MODEL_CONFUSION.tn), String(BEST_MODEL_CONFUSION.fp)],
-            [String(BEST_MODEL_CONFUSION.fn), String(BEST_MODEL_CONFUSION.tp)],
-          ],
-          texttemplate: '%{text}',
-          textfont: { size: 20, color: 'white' },
-          colorscale: 'Greens',
-          hovertemplate: '<b>%{y}</b><br>%{x}<br>Count: %{z}<extra></extra>',
-        },
-      ],
-      layout: {
-        title: 'Random Forest Confusion Matrix (Derived from notebook metrics)',
-        height: 500,
-      },
-    };
-  }, []);
+  const bestModelConfusionFigure = useMemo<PlotFigure>(() => RANDOM_FOREST_CONFUSION_FIGURE, []);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#1DB954] to-zinc-900 p-4 font-sans md:p-8">
@@ -589,7 +594,7 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
             <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm text-zinc-500">
               <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Binary Classification</span>
               <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Top 25% Hit Label</span>
-              <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Best Model: Random Forest</span>
+              <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1">Best Model: {BEST_MODEL.name}</span>
             </div>
           </div>
         </header>
@@ -798,7 +803,7 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
                             <h4 className="text-xl font-black text-zinc-900">{model.name}</h4>
                             <p className="mt-1 text-sm text-zinc-500">{model.family}</p>
                           </div>
-                          {model.id === 'rf' ? (
+                          {model.id === BEST_MODEL_ID ? (
                             <div className="rounded-full bg-[#1DB954] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-black">
                               Best
                             </div>
@@ -872,7 +877,7 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
                           {MODEL_RESULTS.map((row) => (
                             <tr
                               key={row.id}
-                              className={cn('hover:bg-zinc-50', row.id === 'rf' && 'bg-[#1DB954]/5')}
+                              className={cn('hover:bg-zinc-50', row.id === BEST_MODEL_ID && 'bg-[#1DB954]/5')}
                             >
                               <td className="px-4 py-3 font-semibold text-zinc-900">{row.name}</td>
                               <td className="px-4 py-3 text-center font-mono">{row.cvRocAuc.toFixed(4)}</td>
@@ -911,34 +916,34 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
                   className="overflow-hidden space-y-8"
                 >
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-                    <StatCard value="1.0000" label="CV ROC AUC" />
-                    <StatCard value="0.9895" label="Test accuracy" accent="dark" />
-                    <StatCard value="1.0000" label="Precision" />
-                    <StatCard value="0.9600" label="Recall" accent="amber" />
-                    <StatCard value="0.9787" label="F1 score" />
+                    <StatCard value={BEST_MODEL.cvRocAuc.toFixed(4)} label="CV ROC AUC" />
+                    <StatCard value={BEST_MODEL.testAccuracy.toFixed(4)} label="Test accuracy" accent="dark" />
+                    <StatCard value={BEST_MODEL.testPrecision.toFixed(4)} label="Precision" />
+                    <StatCard value={BEST_MODEL.testRecall.toFixed(4)} label="Recall" accent="amber" />
+                    <StatCard value={BEST_MODEL.testF1.toFixed(4)} label="F1 score" />
                   </div>
 
                   <div className="grid gap-8 lg:grid-cols-2">
                     <PlotCard
-                      title="Random Forest Confusion Matrix"
+                      title={`${BEST_MODEL.name} Confusion Matrix`}
                       subtitle="Derived directly from the reported precision, recall, support, and class counts in the notebook."
                       figure={bestModelConfusionFigure}
                     />
 
                     <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-                      <h4 className="text-lg font-black tracking-tight text-zinc-900">Why Random Forest wins</h4>
+                      <h4 className="text-lg font-black tracking-tight text-zinc-900">Why {BEST_MODEL.name} wins</h4>
                       <div className="mt-4 space-y-4 text-sm leading-relaxed text-zinc-600">
                         <p>
-                          Random Forest combines <strong>excellent ranking quality</strong> with <strong>very strong classification accuracy</strong>.
+                          {BEST_MODEL.name} combines <strong>excellent ranking quality</strong> with <strong>very strong classification accuracy</strong>.
                         </p>
                         <p>
                           It correctly classifies almost all non-hit songs and still captures the vast majority of hit songs. In the reported test results:
                         </p>
                         <ul className="space-y-2">
-                          <li>• True Negatives: <strong>143</strong></li>
-                          <li>• False Positives: <strong>0</strong></li>
-                          <li>• False Negatives: <strong>2</strong></li>
-                          <li>• True Positives: <strong>46</strong></li>
+                          <li>• True Negatives: <strong>{BEST_MODEL_CONFUSION.tn}</strong></li>
+                          <li>• False Positives: <strong>{BEST_MODEL_CONFUSION.fp}</strong></li>
+                          <li>• False Negatives: <strong>{BEST_MODEL_CONFUSION.fn}</strong></li>
+                          <li>• True Positives: <strong>{BEST_MODEL_CONFUSION.tp}</strong></li>
                         </ul>
                         <p>
                           This makes it especially attractive when false alarms should be minimized while still retaining strong hit detection.
@@ -980,7 +985,7 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
 
                       <button
                         className="rounded-full border-2 border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] transition hover:bg-[#1DB954] hover:text-white"
-                        onClick={() => setSelectedModelId('rf')}
+                        onClick={() => setSelectedModelId(BEST_MODEL_ID)}
                       >
                         Jump to best model
                       </button>
@@ -1028,7 +1033,7 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
                         <h4 className="text-lg font-black uppercase tracking-tight">Interpretation</h4>
                       </div>
                       <p className="border-l-4 border-[#1DB954] pl-4 text-sm leading-relaxed text-zinc-300">
-                        {selectedModel.name === 'Random Forest'
+                        {selectedModel.id === BEST_MODEL_ID
                           ? 'This model is the strongest all-round choice because it preserves extremely high precision while still recovering almost all hit songs.'
                           : selectedModel.name === 'LogisticRegression'
                           ? 'This is the best option when you want a transparent and explainable model, even though it gives up some recall compared with the leading ensembles.'
