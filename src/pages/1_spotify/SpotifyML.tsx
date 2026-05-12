@@ -90,6 +90,44 @@ const MODEL_COLOR_MAP: Record<string, string> = {
   MLP: '#F43F5E',
 };
 
+const PIPELINE_STEPS = [
+  {
+    step: '1',
+    label: 'Feature Selection',
+    purpose: 'Select the input features and define the prediction target.',
+    techniques: ['Feature filtering', 'Target definition: is_hit', 'Leakage removal'],
+  },
+  {
+    step: '2',
+    label: 'Preprocessing',
+    purpose: 'Prepare numeric and categorical data for machine learning models.',
+    techniques: ['SimpleImputer', 'StandardScaler', 'OneHotEncoder', 'ColumnTransformer'],
+  },
+  {
+    step: '3',
+    label: 'Machine Learning',
+    purpose: 'Train and compare multiple classification models using the same pipeline.',
+    techniques: [
+      'Dummy Classifier',
+      'Logistic Regression',
+      'KNN',
+      'Decision Tree',
+      'Random Forest',
+      'Extra Trees',
+      'AdaBoost',
+      'Gradient Boosting',
+      'SVC',
+      'MLP',
+    ],
+  },
+  {
+    step: '4',
+    label: 'Evaluation',
+    purpose: 'Measure model performance and select the best model.',
+    techniques: ['Cross-validation', 'Accuracy', 'Precision', 'Recall', 'F1-score', 'ROC AUC', 'Confusion Matrix', 'ROC Curve'],
+  },
+] as const;
+
 const TEST_MULTI_METRIC_FIGURE = testMultiMetricComparisonJson as PlotFigure;
 const CV_ROC_AUC_FIGURE = cvRocAucComparisonJson as PlotFigure;
 const RANDOM_FOREST_CONFUSION_FIGURE = randomForestConfusionJson as PlotFigure;
@@ -731,39 +769,61 @@ export default function SpotifyML({ onBack }: { onBack?: () => void }) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
+                  className="overflow-hidden space-y-6"
                 >
-                  <div className="grid gap-6 md:grid-cols-4">
-                    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-                      <div className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-[#1DB954]">Step 1</div>
-                      <h4 className="mb-2 font-bold text-zinc-900">Feature selection</h4>
-                      <p className="text-sm text-zinc-600">
-                        Use chart, playlist, release, artist, and audio variables while excluding direct leakage from streams.
-                      </p>
+                  <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                      <div>
+                        <p className="text-sm font-black uppercase tracking-[0.22em] text-[#1DB954]">
+                          Define Pipeline
+                        </p>
+                        <h4 className="mt-2 text-2xl font-black tracking-tight text-zinc-900">
+                          Feature Selection → Preprocessing → Machine Learning → Evaluation
+                        </h4>
+                      </div>
+                      <div className="rounded-full border border-[#1DB954]/30 bg-[#1DB954]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#1DB954]">
+                        Scikit-learn Pipeline
+                      </div>
                     </div>
 
-                    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-                      <div className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-[#1DB954]">Step 2</div>
-                      <h4 className="mb-2 font-bold text-zinc-900">Preprocessing</h4>
-                      <p className="text-sm text-zinc-600">
-                        Numerical columns are imputed and scaled. Categorical columns are imputed and one-hot encoded.
-                      </p>
-                    </div>
+                    <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                      {PIPELINE_STEPS.map((group) => (
+                        <div
+                          key={group.step}
+                          className="rounded-2xl border border-zinc-100 bg-zinc-50 p-5"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1DB954] text-sm font-black text-white">
+                              {group.step}
+                            </div>
 
-                    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-                      <div className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-[#1DB954]">Step 3</div>
-                      <h4 className="mb-2 font-bold text-zinc-900">Model search</h4>
-                      <p className="text-sm text-zinc-600">
-                        Evaluate a broad set of learners: linear, instance-based, kernel, tree-based, bagging, and boosting approaches.
-                      </p>
-                    </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-black uppercase tracking-[0.18em] text-[#1DB954]">
+                                {group.label}
+                              </div>
+                              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                                {group.purpose}
+                              </p>
 
-                    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-                      <div className="mb-3 text-sm font-black uppercase tracking-[0.18em] text-[#1DB954]">Step 4</div>
-                      <h4 className="mb-2 font-bold text-zinc-900">Final evaluation</h4>
-                      <p className="text-sm text-zinc-600">
-                        Compare cross-validation and held-out test metrics, then inspect the strongest model in more detail.
-                      </p>
+                              <div className="mt-4">
+                                <p className="text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                                  Techniques Used
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {group.techniques.map((technique) => (
+                                    <span
+                                      key={technique}
+                                      className="rounded-full border border-[#1DB954]/20 bg-[#1DB954]/10 px-3 py-1 text-xs font-bold text-[#1DB954]"
+                                    >
+                                      {technique}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </motion.div>
